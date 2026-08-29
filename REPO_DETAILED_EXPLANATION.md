@@ -298,21 +298,21 @@ This architecture directly addresses assignment risks:
 ```mermaid
 graph LR
     subgraph Inputs
-      CORPUS[corpus/*]
-      DRAFT[contract text]
-      ENV[LITMUS_AI_BASE_URL + LITMUS_AI_API_KEY]
+      CORPUS["corpus files"]
+      DRAFT["contract text"]
+      ENV["AI credentials"]
     end
 
-    CFG[config.py]
-    INGEST[corpus.py]
-    LLM[llm.py]
-    PB[playbook.py]
-    RV[reviewer.py]
-    API[server.py]
+    CFG["config.py"]
+    INGEST["corpus.py"]
+    LLM["llm.py"]
+    PB["playbook.py"]
+    RV["reviewer.py"]
+    API["server.py"]
 
-    PLAYBOOK_OUT[playbook/playbook.json + PLAYBOOK.md]
-    CACHE[review_cache/*.json]
-    REVIEW_OUT[/api/review JSON]
+    PLAYBOOK_OUT["playbook output"]
+    CACHE["review cache json"]
+    REVIEW_OUT["api review response json"]
 
     ENV --> CFG --> API
     CORPUS --> INGEST --> PB
