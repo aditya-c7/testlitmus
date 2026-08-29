@@ -1,214 +1,379 @@
-# testlitmus / precedent — Detailed Simple Explanation
+# testlitmus / precedent — Detailed Simple Explanation (In-Depth)
+
+This document explains the repository, assignment goal, architecture, file purposes, and full runtime behavior in plain language, deeply but clearly.
+
+---
 
 ## 1) What this repository is
 
-This repo contains a solution for a Litmus assessment called **Precedent**.
+This repository contains a Litmus assessment solution named **Precedent**.
 
-In simple terms, it builds a small legal AI system that:
-1. **Reads a law firm's historical contract files**
-2. **Builds a negotiation playbook** from those files
-3. **Reviews a new incoming contract** using that playbook
-4. For each clause, gives exactly one decision: **accept**, **counter**, or **escalate**
+In simple terms, this project builds a legal AI workflow that does two jobs:
 
----
+1. Learns a firm's **real negotiation behavior** from historical legal files.
+2. Reviews a **new incoming contract** clause-by-clause and returns a clear decision for each clause.
 
-## 2) What question/problem statement was asked
+Each clause decision must be exactly one of:
+- `accept`
+- `counter`
+- `escalate`
 
-From the assignment (`precedent/README.md`), the required task is:
-
-- **Stage 1:** Generate a playbook from `./corpus` at startup
-- **Stage 2:** Expose an API endpoint that reviews incoming contract text against the playbook
-- Must cite corpus filenames as evidence
-- Must be deterministic (same input → same output)
-- Must run as a service with:
-  - `GET /` readiness
-  - `POST /api/review` review endpoint
-
-So the core question was:  
-**“Can you turn past agreements and internal files into a reusable negotiation playbook, then apply it to new drafts in a structured and evidence-backed way?”**
+So this is not just text summarization — it is structured legal decisioning with evidence.
 
 ---
 
-## 3) What was built (high-level)
+## 2) What problem statement asked you to build
 
-A Python HTTP service (`precedent/server.py`) with these components:
+The assignment (`/home/runner/work/testlitmus/testlitmus/precedent/README.md`) asks for a 2-stage system.
 
-- **Corpus loader** (`corpus.py`)  
-  Reads TXT/MD/CSV/PDF/XLSX and normalizes into text documents with citations.
+### Stage 1 — Build playbook from corpus
+On startup, the service must read all files in `/home/runner/work/testlitmus/testlitmus/precedent/corpus` and derive how that law firm actually negotiates:
+- default language
+- accepted fallbacks
+- never-accept positions
+- escalation routes
+- conflicts and resolution basis
 
-- **LLM client** (`llm.py`)  
-  Connects to OpenAI-compatible endpoint from env vars.
+Then persist that playbook under `/home/runner/work/testlitmus/testlitmus/precedent/playbook`.
 
-- **Playbook generator** (`playbook.py`)  
-  Uses LLM + all corpus docs to build structured playbook JSON and markdown artifact.
+### Stage 2 — Review new draft against generated playbook
+The service must accept a contract draft and produce per-clause output where each clause gets one decisive disposition (`accept`, `counter`, `escalate`) with rationale and corpus-file citations.
 
-- **Contract reviewer** (`reviewer.py`)  
-  Splits contract into clauses, asks LLM for clause-by-clause dispositions, validates/repairs output, enforces strict rules, caches deterministic responses.
-
-- **Service layer** (`server.py`)  
-  Starts everything, serves API.
-
-- **Startup script** (`start`)  
-  Creates venv if needed, installs dependencies, runs server.
+### Hard constraints from assignment
+- No hardcoded legal positions.
+- All decisions grounded in corpus documents.
+- Citations must map to real corpus filenames.
+- Deterministic review behavior.
+- HTTP service with readiness and review endpoints.
 
 ---
 
-## 4) End-to-end workflow
+## 3) What you built (actual implementation)
+
+You built a Python service with these major modules:
+
+- `/home/runner/work/testlitmus/testlitmus/precedent/server.py`  
+  API surface and orchestration.
+
+- `/home/runner/work/testlitmus/testlitmus/precedent/corpus.py`  
+  Corpus ingestion and format normalization.
+
+- `/home/runner/work/testlitmus/testlitmus/precedent/playbook.py`  
+  Stage 1 playbook derivation, persistence, fingerprinting, markdown rendering.
+
+- `/home/runner/work/testlitmus/testlitmus/precedent/reviewer.py`  
+  Stage 2 clause segmentation, LLM review, validation/repair, rule enforcement, deterministic cache.
+
+- `/home/runner/work/testlitmus/testlitmus/precedent/llm.py`  
+  OpenAI-compatible client wrapper with model discovery, retry, and JSON extraction.
+
+- `/home/runner/work/testlitmus/testlitmus/precedent/config.py`  
+  Environment configuration, paths, credential validation.
+
+- `/home/runner/work/testlitmus/testlitmus/precedent/start`  
+  Boot script for environment setup and server start.
+
+---
+
+## 4) End-to-end runtime flow
 
 ```mermaid
 flowchart TD
-    A[Service starts via ./start] --> B[Load credentials + config]
-    B --> C[Load corpus files]
-    C --> D[Build or reuse playbook]
-    D --> E[Server ready: GET /]
-    E --> F[POST /api/review with contract text]
-    F --> G[Split into clauses]
-    G --> H[LLM review using playbook + corpus file list]
-    H --> I[Validate/repair/fill gaps/enforce never-accept]
-    I --> J[Return JSON review + counts + fingerprint]
+    A[Run ./start] --> B[Ensure Python + install requirements]
+    B --> C[Run server.py]
+    C --> D[Load config + credentials]
+    D --> E[Load corpus documents]
+    E --> F[Build or reuse playbook]
+    F --> G[Initialize reviewer]
+    G --> H[Service ready GET /]
+    H --> I[POST /api/review]
+    I --> J[Split draft into clauses]
+    J --> K[LLM clause review]
+    K --> L[Validate + repair + enforce rules]
+    L --> M[Cache deterministic result]
+    M --> N[Return JSON response]
 ```
 
 ---
 
-## 5) Stage 1 (playbook generation) — how it works
+## 5) Deep dive — Stage 1 playbook generation
 
-1. `corpus.load_corpus()` recursively reads all files under `precedent/corpus/`
-2. Each file becomes a `Document(citation, category, text)`
-3. `playbook.load_or_build()` computes a **corpus fingerprint**
-4. If existing playbook fingerprint matches, reuse it
-5. Else call LLM to build playbook topics with:
-   - standard position/language
-   - approved fallbacks
-   - never-accept rules
-   - escalation rules
-   - conflicts + resolutions
-6. Save to:
-   - `precedent/playbook/playbook.json`
-   - `precedent/playbook/PLAYBOOK.md`
+Stage 1 is the foundational intelligence-building step.
+
+### 5.1 Corpus loading (`corpus.py`)
+`load_corpus(corpus_dir)` recursively scans files and converts each file to text.
+
+Supported formats:
+- `.txt`, `.md` via text read
+- `.csv` via CSV reader, row-joined text
+- `.pdf` via `pypdf.PdfReader` extraction
+- `.xlsx/.xls` via `openpyxl` sheet/row extraction
+
+For each readable file:
+- `citation` = relative path under corpus (used in evidence)
+- `category` = parent folder name (`deals`, `memos`, etc.)
+- `text` = normalized text content
+
+Output is `Document(citation, category, text)` list.
+
+### 5.2 Corpus fingerprinting (`playbook.py`)
+`corpus_fingerprint()` hashes every document path + content and returns a short digest.
+
+Why needed:
+- if corpus hasn’t changed, reuse existing playbook
+- if corpus changed, regenerate playbook
+
+### 5.3 Playbook generation prompt strategy
+`playbook.py` sends all corpus files into a structured prompt with strict JSON schema requirements.
+
+Prompt instructions enforce:
+- derive from corpus only
+- prefer actual signed/approved behavior over stale docs when conflicts exist
+- include evidence for every claim
+- include standard, fallback, never-accept, escalation, conflicts, notes
+
+### 5.4 Post-generation sanitation
+After LLM returns playbook JSON:
+- evidence lists are filtered to known corpus citations only
+- malformed structures normalized
+
+### 5.5 Persistence
+Writes:
+- `/home/runner/work/testlitmus/testlitmus/precedent/playbook/playbook.json`
+- `/home/runner/work/testlitmus/testlitmus/precedent/playbook/PLAYBOOK.md`
+
+So playbook is both machine-readable and human-readable.
 
 ---
 
-## 6) Stage 2 (contract review) — how it works
+## 6) Deep dive — Stage 2 contract review
 
-1. Receive contract text at `POST /api/review`
-2. `segment_clauses()` detects numbered headings (e.g., `8. LIMITATION OF LIABILITY`)
-3. LLM returns structured JSON for each clause
-4. Reviewer applies guardrails:
-   - only allow dispositions: `accept|counter|escalate`
-   - `counter` must include proposed language
-   - citations must be valid corpus filenames
-   - attempt repair if response is malformed/incomplete
-   - fill missing clauses as `escalate`
-   - force escalation for absolute never-accept topics
-5. Cache by `(playbook_fingerprint + contract_text)` hash for deterministic repeat outputs
+Stage 2 applies learned policy to new drafts.
 
----
-
-## 7) API behavior
-
-### `GET /`
-Returns readiness metadata (status, model, playbook fingerprint, topic count).
-
-### `POST /api/review`
-Input:
+### 6.1 Input contract ingestion
+`POST /api/review` receives JSON:
 
 ```json
-{"contract": "<full draft text>"}
+{"contract": "<full contract text>"}
 ```
 
-Output contains:
-- summary
-- overall disposition counts
-- clause entries with disposition, rationale, proposed language, citations, approval note
-- playbook fingerprint
+Invalid JSON or empty contract returns `400`.
+
+### 6.2 Clause segmentation
+`segment_clauses()` detects numbered headings like `3. FEES AND PAYMENT` and slices body text per clause.
+
+If headings are not recognized, fallback is single clause: `Contract`.
+
+### 6.3 LLM review call
+Reviewer prompt includes:
+- full generated playbook
+- exact allowed corpus citation filenames
+- pre-segmented clauses
+- strict required output schema
+
+Model must output per clause:
+- clause identifier
+- disposition
+- rationale
+- proposed language (required for `counter`)
+- citations
+- approval note
+
+### 6.4 Multi-layer post-processing guardrails
+Raw model output is not trusted directly.
+
+#### A) `_validated()`
+Drops invalid entries if:
+- disposition not allowed
+- rationale missing
+- `counter` without language
+
+Also filters citations to known corpus files only.
+
+#### B) `_repair()`
+If clauses were broken/missing/uncited, sends a correction prompt requesting fixed entries.
+
+#### C) `_cover_gaps()`
+If some clauses still have no entry, force-fill with fallback:
+- disposition: `escalate`
+- rationale: playbook unclear / missing coverage
+
+This ensures every clause gets exactly one disposition.
+
+#### D) `_force_never_accept()`
+For absolute never-accept topics (e.g., “never in any form”), overrides non-escalate output to `escalate`, injects evidence and warning note.
+
+### 6.5 Determinism and cache
+Cache key = hash(playbook_fingerprint + contract_text).  
+Stored in `review_cache` as JSON.
+
+Effect:
+- same playbook + same contract => same returned response object
+- faster repeat reviews
 
 ---
 
-## 8) File-by-file explanation
+## 7) API contract and behavior
+
+### `GET /`
+Readiness endpoint. Returns:
+- status
+- service name
+- active model
+- playbook fingerprint
+- number of playbook topics
+
+### `POST /api/review`
+Runs full review pipeline and returns:
+- `summary`
+- `overall_counts` for `accept/counter/escalate`
+- ordered clause entries
+- `playbook_fingerprint`
+
+---
+
+## 8) Why this architecture is necessary
+
+This architecture directly addresses assignment risks:
+
+1. **LLM hallucination risk** → constrained schemas + citation filtering + repair logic.
+2. **Inconsistent guidance in corpus** → prompt requires conflict handling and evidence hierarchy.
+3. **Need deterministic grading** → temperature 0 + cache keying.
+4. **Need explainability for legal users** → explicit rationale + citations + approval notes.
+5. **Need reproducibility** → startup playbook generation from current corpus.
+
+---
+
+## 9) File-by-file explanation (full map)
 
 ## Repository root
+- `/home/runner/work/testlitmus/testlitmus/precedent/`  
+  Primary solution package.
+- `/home/runner/work/testlitmus/testlitmus/precedent_submission.zip`  
+  Submission artifact.
+- `/home/runner/work/testlitmus/testlitmus/REPO_DETAILED_EXPLANATION.md`  
+  This explanatory document.
+- `/home/runner/work/testlitmus/testlitmus/_verify.py`, `_verify2.py`  
+  Local validation helpers for review behavior.
+- `/home/runner/work/testlitmus/testlitmus/_rerender.py`  
+  Regenerates markdown playbook from saved JSON.
 
-- `precedent/` → main project (actual deliverable code)
-- `_verify.py`, `_verify2.py` → local verification/debug scripts
-- `_rerender.py` → regenerates `PLAYBOOK.md` from stored JSON
-- `precedent_submission.zip` → packaged submission artifact
+## Core package: `/home/runner/work/testlitmus/testlitmus/precedent`
+- `README.md` → assessment specification.
+- `RUNBOOK.md` → quick run instructions.
+- `LITMUS-AI-NOTICE.md` → AI capture/tracking guidance file.
+- `start` → executable startup entry.
+- `validate.sh` → grading-shape local validator.
+- `requirements.txt` → dependency list.
+- `config.py` → env loading + constants + credential checks.
+- `corpus.py` → corpus ingestion/parsing layer.
+- `llm.py` → LLM transport abstraction and JSON extraction.
+- `playbook.py` → Stage 1 build/reuse/store and markdown renderer.
+- `reviewer.py` → Stage 2 review logic and protections.
+- `server.py` → HTTP endpoints and process lifecycle.
+- `tests/test_offline.py` → non-network unit tests.
 
-## `precedent/` main code
-
-- `README.md` → assignment statement + requirements
-- `RUNBOOK.md` → how to run locally
-- `LITMUS-AI-NOTICE.md` → Litmus capture/tracking notice
-- `config.py` → paths, env loading, credentials, port
-- `corpus.py` → read/normalize corpus file formats
-- `llm.py` → model discovery, retries, JSON extraction
-- `playbook.py` → Stage 1 logic + playbook persistence/markdown rendering
-- `reviewer.py` → Stage 2 review logic + clause segmentation + caching + guardrails
-- `server.py` → HTTP server and endpoint handlers
-- `start` → boot script that installs deps and launches service
-- `requirements.txt` → python dependencies (`httpx`, `pypdf`, `openpyxl`)
-- `validate.sh` → official local contract-check script matching grading shape
-- `tests/test_offline.py` → offline unit tests for corpus, segmentation, review behavior, caching, API
-- `playbook/` → generated output artifact (JSON + markdown playbook)
-- `review_cache/` (created at runtime) → cached review results
-
-## `precedent/corpus/` data used as source of truth
-
-- `template/` → standard contract form baseline
-- `deals/` → executed agreements (actual accepted terms)
-- `redlines/` → negotiation drafts and counters
-- `memos/` → internal legal policy/positions/decisions
-- `policies/approvals_log.csv` → explicit deviations and approvals
-- `policies/clause_matrix_2023.xlsx` → older policy matrix (may conflict with newer evidence)
-
-## `precedent/inbound/`
-
-- sample incoming contracts to test review behavior
-
----
-
-## 9) Design choices and why they are necessary
-
-- **Evidence-first citations**: required by assignment; improves traceability.
-- **Strict disposition vocabulary**: required hard rule.
-- **Determinism via cache + temperature 0**: required by assignment.
-- **Conflict handling in playbook prompt**: needed because corpus docs can disagree.
-- **Startup playbook derivation**: required (cannot hardcode positions).
+## Data directories
+- `/home/runner/work/testlitmus/testlitmus/precedent/corpus/template`  
+  Standard baseline form text.
+- `/home/runner/work/testlitmus/testlitmus/precedent/corpus/deals`  
+  Executed agreements (best evidence of accepted practice).
+- `/home/runner/work/testlitmus/testlitmus/precedent/corpus/redlines`  
+  Negotiation turns (counterparty vs firm counter).
+- `/home/runner/work/testlitmus/testlitmus/precedent/corpus/memos`  
+  Internal legal policy memos.
+- `/home/runner/work/testlitmus/testlitmus/precedent/corpus/policies`  
+  approvals log + older matrix.
+- `/home/runner/work/testlitmus/testlitmus/precedent/inbound`  
+  sample drafts for testing stage-2 behavior.
+- `/home/runner/work/testlitmus/testlitmus/precedent/playbook`  
+  generated stage-1 output artifacts.
+- `/home/runner/work/testlitmus/testlitmus/precedent/review_cache`  
+  runtime-generated deterministic review cache.
 
 ---
 
-## 10) Internal architecture diagram
+## 10) Internal component interaction diagram
 
 ```mermaid
 graph LR
-    subgraph Data
-      C[corpus/*]
-      I[inbound/*.txt]
+    subgraph Inputs
+      CORPUS[corpus/*]
+      DRAFT[contract text]
+      ENV[LITMUS_AI_BASE_URL + LITMUS_AI_API_KEY]
     end
 
-    subgraph Engine
-      CO[corpus.py]
-      PB[playbook.py]
-      RV[reviewer.py]
-      LM[llm.py]
-      CF[config.py]
-    end
+    CFG[config.py]
+    INGEST[corpus.py]
+    LLM[llm.py]
+    PB[playbook.py]
+    RV[reviewer.py]
+    API[server.py]
 
-    SV[server.py API]
-    OUT1[playbook/playbook.json + PLAYBOOK.md]
-    OUT2[review JSON]
+    PLAYBOOK_OUT[playbook/playbook.json + PLAYBOOK.md]
+    CACHE[review_cache/*.json]
+    REVIEW_OUT[/api/review JSON]
 
-    C --> CO --> PB --> OUT1
-    OUT1 --> RV
-    I --> RV
-    LM --> PB
-    LM --> RV
-    CF --> SV
-    PB --> SV
-    RV --> SV --> OUT2
+    ENV --> CFG --> API
+    CORPUS --> INGEST --> PB
+    LLM --> PB
+    PB --> PLAYBOOK_OUT
+    PLAYBOOK_OUT --> RV
+    DRAFT --> RV
+    LLM --> RV
+    RV --> CACHE
+    RV --> API --> REVIEW_OUT
 ```
 
 ---
 
-## 11) In one sentence
+## 11) Example clause journey (end-to-end understanding)
 
-You built a deterministic, evidence-citing legal contract review service that learns negotiation positions from a firm's historical corpus and applies them clause-by-clause to new drafts.
+Take a clause in inbound draft: **Fees and Payment**
+
+1. Clause segmentation detects `3. FEES AND PAYMENT`.
+2. Reviewer prompt gives model:
+   - this clause text
+   - playbook standard position (e.g., net 30)
+   - approved fallbacks (e.g., net 45 / net 60 with conditions)
+3. Model decides disposition based on clause text and fallback conditions.
+4. Post-processing checks output validity.
+5. If citations invalid, they are removed; repair may re-request proper citation.
+6. Final clause output includes one disposition + rationale + valid citations + approval note.
+
+This same pattern applies to every clause.
+
+---
+
+## 12) Validation and reliability coverage
+
+`tests/test_offline.py` verifies:
+- corpus loaders can parse txt/pdf/xlsx
+- clause segmentation works on inbound drafts
+- invalid review entries are repaired
+- every clause gets a disposition
+- review caching works
+- API endpoints behave correctly
+
+`validate.sh` additionally verifies delivery contract expectations:
+- `./start` exists/executable
+- service becomes ready within limit
+- `./playbook` generated at boot
+- review endpoint returns non-empty response
+
+---
+
+## 13) Practical summary
+
+You built a deterministic legal review service that:
+- extracts negotiation policy from historical files,
+- generates durable playbook artifacts,
+- applies those policies to new contracts clause-by-clause,
+- produces explainable decisions with corpus evidence,
+- and enforces strict output correctness before returning results.
+
+---
+
+## 14) One-line final understanding
+
+This project is an evidence-grounded, production-shaped miniature of a legal contract negotiation assistant that learns from prior firm behavior and returns deterministic, auditable clause dispositions on new drafts.
