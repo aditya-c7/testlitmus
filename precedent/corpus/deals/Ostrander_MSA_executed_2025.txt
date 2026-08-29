@@ -1,0 +1,59 @@
+Master Services Agreement - Ostrander Retail Group (Executed)
+=============================================================
+
+This Master Services Agreement (this "Agreement") is entered into as of February 16, 2025 (the "Effective Date") by and between Novaric Systems, Inc. ("Provider") and Ostrander Retail Group ("Client"). The parties agree as follows.
+
+1. DEFINITIONS
+"Platform" means Provider's proprietary software-as-a-service platform and related tools. "Services" means the subscription and professional services described in an order or statement of work under this Agreement. "Documentation" means Provider's then-current usage documentation for the Platform.
+
+2. SERVICES
+Provider shall provide the Services described in each mutually executed order or statement of work, in material conformance with the Documentation and with reasonable skill and care. Client shall provide the cooperation, access, and information reasonably necessary for Provider to perform.
+
+3. FEES AND PAYMENT
+All fees are due and payable within 30 days after the invoice date. Amounts remaining unpaid past the due date bear interest at the lesser of 1.5% per month and the highest rate allowed by law. Client is responsible for all applicable taxes, excluding taxes measured by Provider's income.
+
+4. TERM AND RENEWAL
+This Agreement begins on the Effective Date and continues for an initial term of 12 months. Any renewal term requires the parties' written agreement, including as to pricing for the renewal period.
+
+5. TERMINATION
+Client may terminate this Agreement without cause upon 60 days' advance written notice. Fees accrue through the effective date of termination, and prepaid amounts are not returnable. Either party may terminate for material breach that remains uncured 30 days after written notice of the breach.
+
+6. WARRANTIES
+Provider warrants that the Services shall materially conform to the Documentation for a period of 120 days following delivery. Client's exclusive remedy for breach of this warranty is re-performance of the affected Services. EXCEPT AS STATED IN THIS SECTION, THE SERVICES ARE PROVIDED "AS IS" AND PROVIDER DISCLAIMS ALL OTHER WARRANTIES, EXPRESS OR IMPLIED.
+
+7. INDEMNIFICATION
+Provider shall defend Client against any third-party claim alleging that the Platform, as provided by Provider and used as permitted under this Agreement, infringes a United States patent, copyright, or trademark, and shall indemnify Client against amounts finally awarded or agreed in settlement of such claim. Client shall defend and indemnify Provider against third-party claims arising from Client's data or its use of the Services in violation of this Agreement.
+
+8. LIMITATION OF LIABILITY
+NEITHER PARTY'S TOTAL LIABILITY ARISING FROM OR RELATED TO THIS AGREEMENT SHALL EXCEED THE AMOUNTS PAID OR OWED BY CLIENT DURING THE 18 MONTHS BEFORE THE EVENT GIVING RISE TO LIABILITY, EXCEPT THAT LIABILITY FOR BREACH OF PROVIDER'S DATA PROTECTION OBLIGATIONS MAY REACH 3 TIMES THAT AMOUNT; NEITHER PARTY IS LIABLE FOR CONSEQUENTIAL, INCIDENTAL, SPECIAL, OR INDIRECT DAMAGES. This limitation does not apply to a party's indemnification obligations for third-party intellectual property claims, breach of Section 9 (Confidentiality), Client's payment obligations, or a party's gross negligence or willful misconduct.
+
+9. CONFIDENTIALITY
+Each party shall protect the other party's Confidential Information with at least the care it uses for its own similar information, and not less than reasonable care, and shall use it only to perform under this Agreement. Confidential Information excludes information that is public through no fault of the recipient, independently developed, or rightfully received from a third party. These obligations survive for 3 years after termination, and for trade secrets, for as long as trade secret protection lasts.
+
+10. INTELLECTUAL PROPERTY
+As between the parties, Provider owns the Platform, its background technology, and all generalized know-how and residuals. Upon payment in full, Client shall own the Work Product that a statement of work identifies as Client-owned and that Provider developed exclusively for Client. Client assigns to Provider all right, title, and interest in feedback and suggestions concerning the Platform or the Services.
+
+11. NON-SOLICITATION
+Neither party shall, during the term of this Agreement and for 12 months after it ends, directly solicit for hire any employee of the other party with whom it worked under this Agreement. Postings addressed to the general public, and hires resulting from them, do not violate this Section.
+
+12. AUDIT
+No more than once in any 12 month period, and on at least 10 business days' written notice, Client may audit Provider's records directly relating to the fees charged under this Agreement, at Client's expense and during normal business hours. Audits do not include access to Provider's systems, facilities used for other customers, or other customers' data. Delivery of Provider's then-current SOC 2 Type II report satisfies Client's audit rights for the applicable period.
+
+13. ASSIGNMENT
+Neither party may assign this Agreement without the other party's prior written consent, except that Provider may assign this Agreement without consent to an affiliate or in connection with a merger, acquisition, or sale of all or substantially all of its assets. Any other purported assignment is void.
+
+14. GOVERNING LAW
+This Agreement, and any dispute arising out of or relating to it, is governed by the law of the State of New York, excluding its conflict-of-laws rules, and the parties submit to the exclusive jurisdiction of the state and federal courts sitting in New York.
+
+15. GENERAL
+Notices must be in writing and are deemed given when delivered by hand, by certified mail, or by email with confirmation of receipt, to the addresses on the signature page. This Agreement, including its orders and statements of work, is the parties' entire agreement regarding its subject matter and supersedes all prior discussions. If any provision is held unenforceable, the remainder stays in effect. Neither party is liable for delay caused by events beyond its reasonable control.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of February 16, 2025.
+
+Novaric Systems, Inc.
+By: R. Castellanos
+Title: General Counsel
+
+Ostrander Retail Group
+By: B. Nakagawa
+Title: Authorized Signatory

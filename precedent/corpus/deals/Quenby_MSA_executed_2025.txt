@@ -1,0 +1,56 @@
+Master Services Agreement - Quenby Manufacturing (Executed)
+===========================================================
+
+This Master Services Agreement (this "Agreement") is entered into as of December 12, 2025 (the "Effective Date") by and between Novaric Systems, Inc. ("Provider") and Quenby Manufacturing ("Client"). The parties agree as follows.
+
+1. DEFINITIONS
+"Platform" means Provider's proprietary software-as-a-service platform and related tools. "Services" means the subscription and professional services described in an order or statement of work under this Agreement. "Documentation" means Provider's then-current usage documentation for the Platform.
+
+2. SERVICES
+Provider will provide the Services described in each mutually executed order or statement of work, in material conformance with the Documentation and with reasonable skill and care. Client will provide the cooperation, access, and information reasonably necessary for Provider to perform.
+
+3. FEES AND PAYMENT
+All fees are due and payable within 45 days after the invoice date. Amounts remaining unpaid past the due date bear interest at the lesser of 1.5% per month and the highest rate allowed by law. Client is responsible for all applicable taxes, excluding taxes measured by Provider's income.
+
+4. TERM AND RENEWAL
+This Agreement begins on the Effective Date and continues for an initial term of 12 months. Thereafter it renews automatically for successive 24-month terms unless either party gives written notice of non-renewal at least 90 days before the end of the then-current term.
+
+5. TERMINATION
+Client may terminate this Agreement without cause upon 60 days' advance written notice. Fees accrue through the effective date of termination, and prepaid amounts are not returnable. Either party may terminate for material breach that remains uncured 30 days after written notice of the breach.
+
+6. WARRANTIES
+For 60 days following delivery, Provider warrants that the Services will perform materially as described in the Documentation. Client's sole and exclusive remedy for breach is re-performance of the nonconforming Services or, if re-performance fails, a refund of the fees paid for them. PROVIDER MAKES NO OTHER WARRANTIES, EXPRESS OR IMPLIED, AND THE SERVICES ARE OTHERWISE PROVIDED "AS IS".
+
+7. INDEMNIFICATION
+Provider will defend Client against any third-party claim alleging that the Platform, as provided by Provider and used as permitted under this Agreement, infringes a United States patent, copyright, or trademark, and will indemnify Client against amounts finally awarded or agreed in settlement of such claim. Client will defend and indemnify Provider against third-party claims arising from Client's data or its use of the Services in violation of this Agreement.
+
+8. LIMITATION OF LIABILITY
+NEITHER PARTY'S TOTAL LIABILITY ARISING FROM OR RELATED TO THIS AGREEMENT WILL EXCEED THE AMOUNTS PAID OR OWED BY CLIENT DURING THE 12 MONTHS BEFORE THE EVENT GIVING RISE TO LIABILITY, AND NEITHER PARTY IS LIABLE FOR CONSEQUENTIAL, INCIDENTAL, SPECIAL, OR INDIRECT DAMAGES. This limitation does not apply to a party's indemnification obligations for third-party intellectual property claims, breach of Section 9 (Confidentiality), Client's payment obligations, or a party's gross negligence or willful misconduct.
+
+9. CONFIDENTIALITY
+Each party will protect the other party's Confidential Information with at least the care it uses for its own similar information, and not less than reasonable care, and will use it only to perform under this Agreement. Confidential Information excludes information that is public through no fault of the recipient, independently developed, or rightfully received from a third party. These obligations survive for 3 years after termination, and for trade secrets, for as long as trade secret protection lasts.
+
+10. INTELLECTUAL PROPERTY
+Provider and its licensors retain all right, title, and interest in and to the Platform, the Services, the Documentation, and all improvements, modifications, and derivative works of any of them. Client receives no rights except the subscriptions and licenses expressly granted. Client hereby assigns to Provider all right, title, and interest in any feedback or suggestions relating to the Platform or Services.
+
+11. AUDIT
+No more than once in any 12 month period, and on at least 10 business days' written notice, Client may audit Provider's records directly relating to the fees charged under this Agreement, at Client's expense and during normal business hours. Audits do not include access to Provider's systems, facilities used for other customers, or other customers' data. Delivery of Provider's then-current SOC 2 Type II report satisfies Client's audit rights for the applicable period.
+
+12. ASSIGNMENT
+Neither party may assign this Agreement without the other party's prior written consent, except that Provider may assign this Agreement without consent to an affiliate or in connection with a merger, acquisition, or sale of all or substantially all of its assets. Any other purported assignment is void.
+
+13. GOVERNING LAW
+This Agreement is governed by the laws of the State of New York, without regard to conflict of laws principles. The state and federal courts located in New York have exclusive jurisdiction over any dispute arising out of this Agreement, and each party consents to their jurisdiction.
+
+14. GENERAL
+Notices must be in writing and are deemed given when delivered by hand, by certified mail, or by email with confirmation of receipt, to the addresses on the signature page. This Agreement, including its orders and statements of work, is the parties' entire agreement regarding its subject matter and supersedes all prior discussions. If any provision is held unenforceable, the remainder stays in effect. Neither party is liable for delay caused by events beyond its reasonable control.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of December 12, 2025.
+
+Novaric Systems, Inc.
+By: R. Castellanos
+Title: General Counsel
+
+Quenby Manufacturing
+By: D. Trask
+Title: Authorized Signatory

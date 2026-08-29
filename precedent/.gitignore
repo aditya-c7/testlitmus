@@ -1,0 +1,8 @@
+.litmus/
+.claude/
+.github/hooks/
+.venv/
+__pycache__/
+review_cache/
+.env
+

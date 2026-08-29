@@ -1,0 +1,49 @@
+Master Services Agreement - Quenby Manufacturing (Draft v2)
+===========================================================
+
+This Master Services Agreement (this "Agreement") is entered into as of December 12, 2025 (the "Effective Date") by and between Novaric Systems, Inc. ("Vendor") and Quenby Manufacturing ("Customer"). The parties agree as follows.
+
+1. DEFINITIONS
+"Platform" means Vendor's proprietary software-as-a-service platform and related tools. "Services" means the subscription and professional services described in an order or statement of work under this Agreement. "Documentation" means Vendor's then-current usage documentation for the Platform.
+
+2. SERVICES
+Vendor will provide the Services described in each mutually executed order or statement of work, in material conformance with the Documentation and with reasonable skill and care. Customer will provide the cooperation, access, and information reasonably necessary for Vendor to perform.
+
+3. FEES AND PAYMENT
+Customer will pay all undisputed fees within 45 days of the date of each invoice. Amounts not paid when due will accrue interest at 1.5% per month or the maximum rate permitted by law, whichever is less. Customer is responsible for all taxes arising from its purchases under this Agreement, excluding taxes on Vendor's net income.
+
+4. PRICING COMMITMENTS
+Vendor represents that the fees charged to Customer are, and during the term will remain, no less favorable than the fees charged to any other customer of Vendor for materially similar services. If Vendor offers more favorable pricing to any other customer, that pricing will apply retroactively to Customer.
+
+5. TERM AND RENEWAL
+The initial term of this Agreement runs 12 months from the Effective Date, after which it extends automatically for successive periods of 24 months each unless either party delivers written notice of non-renewal at least 90 days before the end of the then-current period.
+
+6. TERMINATION
+Customer may terminate this Agreement without cause upon 60 days' advance written notice. Fees accrue through the effective date of termination, and prepaid amounts are not returnable. Either party may terminate for material breach that remains uncured 30 days after written notice of the breach.
+
+7. WARRANTIES
+Vendor warrants on a continuing basis throughout the term that the Services will conform to the Documentation and will be available without material interruption. Customer may pursue any remedy at law or in equity for breach of this warranty.
+
+8. INDEMNIFICATION
+Vendor will defend Customer against any third-party claim alleging that the Platform, as provided by Vendor and used as permitted under this Agreement, infringes a United States patent, copyright, or trademark, and will indemnify Customer against amounts finally awarded or agreed in settlement of such claim. Customer will defend and indemnify Vendor against third-party claims arising from Customer's data or its use of the Services in violation of this Agreement.
+
+9. LIMITATION OF LIABILITY
+EXCEPT FOR THE EXCLUDED CLAIMS, EACH PARTY'S AGGREGATE LIABILITY ARISING OUT OF OR RELATED TO THIS AGREEMENT WILL NOT EXCEED THE FEES PAID OR PAYABLE BY CUSTOMER IN THE 12 MONTHS PRECEDING THE EVENT GIVING RISE TO THE CLAIM. NEITHER PARTY WILL BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES. "Excluded Claims" means a party's indemnification obligations for third-party intellectual property claims, breach of Section 10 (Confidentiality), Customer's payment obligations, and a party's gross negligence or willful misconduct.
+
+10. CONFIDENTIALITY
+Each party will protect the other party's Confidential Information with at least the care it uses for its own similar information, and not less than reasonable care, and will use it only to perform under this Agreement. Confidential Information excludes information that is public through no fault of the recipient, independently developed, or rightfully received from a third party. These obligations survive for 3 years after termination, and for trade secrets, for as long as trade secret protection lasts.
+
+11. INTELLECTUAL PROPERTY
+As between the parties, Vendor owns the Platform, the Documentation, and all modifications, improvements, and derivative works of them, together with all intellectual property rights therein. Customer's rights are limited to the subscriptions and licenses expressly granted in this Agreement. Customer assigns to Vendor all right, title, and interest in feedback and suggestions concerning the Platform or the Services.
+
+12. AUDIT
+No more than once in any 12 month period, and on at least 10 business days' written notice, Customer may audit Vendor's records directly relating to the fees charged under this Agreement, at Customer's expense and during normal business hours. Audits do not include access to Vendor's systems, facilities used for other customers, or other customers' data. Delivery of Vendor's then-current SOC 2 Type II report satisfies Customer's audit rights for the applicable period.
+
+13. ASSIGNMENT
+Neither party may transfer this Agreement, by assignment, operation of law, or otherwise, without the other party's prior written consent, except that Vendor may do so without consent to an affiliate or to a successor in connection with a merger, acquisition, or sale of substantially all of its assets. A purported transfer in breach of this Section is void.
+
+14. GOVERNING LAW
+This Agreement, and any dispute arising out of or relating to it, is governed by the law of the State of New York, excluding its conflict-of-laws rules, and the parties submit to the exclusive jurisdiction of the state and federal courts sitting in New York.
+
+15. GENERAL
+Notices must be in writing and are deemed given when delivered by hand, by certified mail, or by email with confirmation of receipt, to the addresses on the signature page. This Agreement, including its orders and statements of work, is the parties' entire agreement regarding its subject matter and supersedes all prior discussions. If any provision is held unenforceable, the remainder stays in effect. Neither party is liable for delay caused by events beyond its reasonable control.

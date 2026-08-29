@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"
+
+if command -v python3 >/dev/null 2>&1; then
+  BASE_PYTHON=python3
+else
+  BASE_PYTHON=python
+fi
+
+if [ -x .venv/bin/python ]; then
+  PYTHON=.venv/bin/python
+elif [ -x .venv/Scripts/python.exe ]; then
+  PYTHON=.venv/Scripts/python.exe
+else
+  "$BASE_PYTHON" -m venv .venv || true
+  if [ -x .venv/bin/python ]; then
+    PYTHON=.venv/bin/python
+  elif [ -x .venv/Scripts/python.exe ]; then
+    PYTHON=.venv/Scripts/python.exe
+  else
+    PYTHON="$BASE_PYTHON"
+  fi
+fi
+
+"$PYTHON" -m pip install --quiet --disable-pip-version-check -r requirements.txt
+exec "$PYTHON" server.py

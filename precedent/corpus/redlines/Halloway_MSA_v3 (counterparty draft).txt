@@ -1,0 +1,46 @@
+Master Services Agreement - Halloway Media (Draft v3)
+=====================================================
+
+This Master Services Agreement (this "Agreement") is entered into as of September 5, 2022 (the "Effective Date") by and between Novaric Systems, Inc. ("Vendor") and Halloway Media ("Customer"). The parties agree as follows.
+
+1. DEFINITIONS
+"Platform" means Vendor's proprietary software-as-a-service platform and related tools. "Services" means the subscription and professional services described in an order or statement of work under this Agreement. "Documentation" means Vendor's then-current usage documentation for the Platform.
+
+2. SERVICES
+Vendor shall provide the Services described in each mutually executed order or statement of work, in material conformance with the Documentation and with reasonable skill and care. Customer shall provide the cooperation, access, and information reasonably necessary for Vendor to perform.
+
+3. FEES AND PAYMENT
+Customer shall pay undisputed fees within 90 days of Customer's acceptance of the applicable Services. No interest accrues on late payments. Customer may withhold amounts subject to good-faith dispute, including associated undisputed amounts on the same invoice.
+
+4. TERM AND RENEWAL
+This Agreement begins on the Effective Date and continues for an initial term of 12 months. Thereafter it renews automatically for successive 24-month terms unless either party gives written notice of non-renewal at least 90 days before the end of the then-current term.
+
+5. TERMINATION
+Customer may terminate this Agreement for convenience at any time on 10 days' written notice. On such termination, Vendor shall refund all fees paid by Customer during the 12 months preceding the effective date of termination.
+
+6. WARRANTIES
+For 120 days following delivery, Vendor warrants that the Services shall perform materially as described in the Documentation. Customer's sole and exclusive remedy for breach is re-performance of the nonconforming Services. VENDOR MAKES NO OTHER WARRANTIES, EXPRESS OR IMPLIED, AND THE SERVICES ARE OTHERWISE PROVIDED "AS IS".
+
+7. INDEMNIFICATION
+Vendor shall defend Customer against any third-party claim alleging that the Platform, as provided by Vendor and used as permitted under this Agreement, infringes a United States patent, copyright, or trademark, and shall indemnify Customer against amounts finally awarded or agreed in settlement of such claim. Customer shall defend and indemnify Vendor against third-party claims arising from Customer's data or its use of the Services in violation of this Agreement.
+
+8. LIMITATION OF LIABILITY
+EXCEPT FOR THE EXCLUDED CLAIMS, EACH PARTY'S AGGREGATE LIABILITY ARISING OUT OF OR RELATED TO THIS AGREEMENT SHALL NOT EXCEED THE FEES PAID OR PAYABLE BY CUSTOMER IN THE 6 MONTHS PRECEDING THE EVENT GIVING RISE TO THE CLAIM. NEITHER PARTY SHALL BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES. "Excluded Claims" means a party's indemnification obligations for third-party intellectual property claims, breach of Section 9 (Confidentiality), Customer's payment obligations, and a party's gross negligence or willful misconduct.
+
+9. CONFIDENTIALITY
+Each party shall protect the other party's Confidential Information with at least the care it uses for its own similar information, and not less than reasonable care, and shall use it only to perform under this Agreement. Confidential Information excludes information that is public through no fault of the recipient, independently developed, or rightfully received from a third party. These obligations survive for 3 years after termination, and for trade secrets, for as long as trade secret protection lasts.
+
+10. INTELLECTUAL PROPERTY
+As between the parties, Vendor owns the Platform, its background technology, and all generalized know-how and residuals. Upon payment in full, Customer shall own the Work Product that a statement of work identifies as Customer-owned and that Vendor developed exclusively for Customer. Customer assigns to Vendor all right, title, and interest in feedback and suggestions concerning the Platform or the Services.
+
+11. AUDIT
+No more than twice in any 12 month period where and to the extent Customer's regulators require it, and otherwise no more than once in any 12 month period, on at least 10 business days' written notice, Customer may audit Vendor's records directly relating to the fees charged and Vendor's compliance with this Agreement, at Customer's expense and during normal business hours. Audits do not include access to Vendor's systems, facilities used for other customers, or other customers' data. Delivery of Vendor's then-current SOC 2 Type II report satisfies Customer's audit rights for the applicable period.
+
+12. ASSIGNMENT
+Neither party may transfer this Agreement, by assignment, operation of law, or otherwise, without the other party's prior written consent, except that either party may do so without consent to an affiliate or to a successor in connection with a merger, acquisition, or sale of substantially all of its assets. A purported transfer in breach of this Section is void.
+
+13. GOVERNING LAW
+This Agreement is governed by the laws of the State of Delaware, without regard to conflict of laws principles. The state and federal courts located in Delaware have exclusive jurisdiction over any dispute arising out of this Agreement, and each party consents to their jurisdiction.
+
+14. GENERAL
+Notices must be in writing and are deemed given when delivered by hand, by certified mail, or by email with confirmation of receipt, to the addresses on the signature page. This Agreement, including its orders and statements of work, is the parties' entire agreement regarding its subject matter and supersedes all prior discussions. If any provision is held unenforceable, the remainder stays in effect. Neither party is liable for delay caused by events beyond its reasonable control.

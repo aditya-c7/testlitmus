@@ -1,0 +1,52 @@
+Master Services Agreement - Windrow Insurance draft (counterparty paper)
+========================================================================
+
+This Master Services Agreement (this "Agreement") is made as of July 23, 2026 (the "Effective Date") between Windrow Insurance ("Client") and Novaric Systems, Inc. ("Supplier"). The parties agree as follows.
+
+1. DEFINITIONS
+"Platform" means Supplier's proprietary software-as-a-service platform and related tools. "Services" means the subscription and professional services described in an order or statement of work under this Agreement. "Documentation" means Supplier's then-current usage documentation for the Platform.
+
+2. SERVICES
+Supplier will provide the Services described in each mutually executed order or statement of work, in material conformance with the Documentation and with reasonable skill and care. Client will provide the cooperation, access, and information reasonably necessary for Supplier to perform.
+
+3. FEES AND PAYMENT
+Client will pay all undisputed fees within sixty (60) days of the date of each invoice. Amounts not paid when due will accrue interest at 1.5% per month or the maximum rate permitted by law, whichever is less. Client is responsible for all taxes arising from its purchases under this Agreement, excluding taxes on Supplier's net income.
+
+4. TERM AND RENEWAL
+This Agreement begins on the Effective Date and continues for an initial term of twelve (12) months. Any renewal term requires the parties' written agreement, including as to pricing for the renewal period.
+
+5. TERMINATION
+Client may terminate this Agreement for convenience on thirty (30) days' prior written notice. On such termination, Client will pay all fees accrued through the effective date of termination, and Supplier will refund a prorated portion of any prepaid fees covering the period after the effective date of termination. Either party may terminate for the other's material breach not cured within thirty (30) days of written notice.
+
+6. WARRANTIES
+Supplier warrants that the Services will materially conform to the Documentation for a period of sixty (60) days following delivery. Client's exclusive remedy for breach of this warranty is re-performance of the affected Services or, if re-performance fails, a refund of the fees paid for the affected Services. EXCEPT AS STATED IN THIS SECTION, THE SERVICES ARE PROVIDED "AS IS" AND SUPPLIER DISCLAIMS ALL OTHER WARRANTIES, EXPRESS OR IMPLIED.
+
+7. INDEMNIFICATION
+Supplier will defend Client against any third-party claim alleging that the Platform, as provided by Supplier and used as permitted under this Agreement, infringes a United States patent, copyright, or trademark, and will indemnify Client against amounts finally awarded or agreed in settlement of such claim. Client will defend and indemnify Supplier against third-party claims arising from Client's data or its use of the Services in violation of this Agreement.
+
+8. LIMITATION OF LIABILITY
+NEITHER PARTY'S TOTAL LIABILITY ARISING FROM OR RELATED TO THIS AGREEMENT WILL EXCEED THE AMOUNTS PAID OR OWED BY CLIENT DURING THE SIX (6) MONTHS BEFORE THE EVENT GIVING RISE TO LIABILITY, AND NEITHER PARTY IS LIABLE FOR CONSEQUENTIAL, INCIDENTAL, SPECIAL, OR INDIRECT DAMAGES. This limitation does not apply to a party's indemnification obligations for third-party intellectual property claims, breach of Section 9 (Confidentiality), Client's payment obligations, or a party's gross negligence or willful misconduct.
+
+9. CONFIDENTIALITY
+Each party will protect the other party's Confidential Information with at least the care it uses for its own similar information, and not less than reasonable care, and will use it only to perform under this Agreement. Confidential Information excludes information that is public through no fault of the recipient, independently developed, or rightfully received from a third party. These obligations survive for three (3) years after termination, and for trade secrets, for as long as trade secret protection lasts.
+
+10. INTELLECTUAL PROPERTY
+Supplier and its licensors retain all right, title, and interest in and to the Platform, background technology, and all generalized knowledge, techniques, and residuals. Notwithstanding the foregoing, Client will own Work Product identified as such in a statement of work and developed by Supplier solely for Client, upon payment in full for those Work Product. Client hereby assigns to Supplier all right, title, and interest in any feedback or suggestions relating to the Platform or Services.
+
+11. NON-SOLICITATION
+For twenty-four (24) months following termination of this Agreement, Supplier will not solicit or hire any employee or contractor of Client. This restriction does not apply to Client.
+
+12. AUDIT
+Client may examine Supplier's records that directly support the fees invoiced under this Agreement and Supplier's compliance with it up to twice in any twelve (12) month period where and to the extent Client's regulators require, and otherwise once in any such period, on no less than ten (10) business days' prior notice, during business hours and at Client's cost. No audit extends to Supplier's systems or to materials of Supplier's other customers. A current SOC 2 Type II report from Supplier discharges this right for the period the report covers.
+
+13. ASSIGNMENT
+Neither party may assign this Agreement without the other party's prior written consent, except that Supplier may assign this Agreement without consent to an affiliate or in connection with a merger, acquisition, or sale of all or substantially all of its assets. Any other purported assignment is void.
+
+14. GOVERNING LAW
+This Agreement, and any dispute arising out of or relating to it, is governed by the law of the State of New York, excluding its conflict-of-laws rules, and the parties submit to the exclusive jurisdiction of the state and federal courts sitting in New York.
+
+15. PUBLICITY
+Supplier may not reference Client, its name, or its trademarks in any publicity, marketing material, or customer list without Client's prior written consent in each instance, and Client may require removal of any existing reference at any time.
+
+16. GENERAL
+Notices must be in writing and are deemed given when delivered by hand, by certified mail, or by email with confirmation of receipt, to the addresses on the signature page. This Agreement, including its orders and statements of work, is the parties' entire agreement regarding its subject matter and supersedes all prior discussions. If any provision is held unenforceable, the remainder stays in effect. Neither party is liable for delay caused by events beyond its reasonable control.
