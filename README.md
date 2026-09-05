@@ -1,78 +1,74 @@
-# Precedent — legal playbook + contract review (localhost web app)
+# Precedent
 
-A small RAG-style legal assistant:
+Your firm's negotiation memory — turned into software.
 
-1. **Stage 1 — build playbook:** reads every file in `precedent/corpus/` (standard form, executed deals, redlines, memos, approvals log, clause matrix) and derives how the firm actually negotiates. Writes `precedent/playbook/playbook.json` + `PLAYBOOK.md`.
-2. **Stage 2 — review drafts:** `POST /api/review` with `{"contract": "..."}` returns a per-clause verdict — exactly one of `accept` / `counter` / `escalate` — with rationale, proposed firm language for counters, approval notes, and corpus filename citations.
-3. **Web UI:** open `http://127.0.0.1:8000/` — paste a draft, load a sample, review, browse results. Same Python process serves UI + API.
+Law firms argue the same clauses over and over: payment terms, liability caps, governing law. Senior lawyers carry the answers in their heads — *"we never sign that," "we caved on this once, but only with partner approval."* Precedent bottles that judgment.
 
-## Run on Windows (localhost)
+**How it works:**
+
+1. **It studies your past deals.** Point it at a folder of old agreements, redlines, and memos. It figures out your standard positions, the concessions you've actually approved (and who approved them), and the terms you refuse in any form.
+2. **It reviews new drafts against that playbook.** Paste in a counterparty's contract and every clause gets one clear verdict — **accept**, **counter** (with your own fallback language), or **escalate** to a lawyer — each backed by citations to your real files.
+
+No hardcoded rules. Swap in a different firm's folder and it learns different positions.
+
+## Run it (2 minutes)
+
+**1. Get a key** — this project uses [OpenRouter](https://openrouter.ai/) as its LLM backend (one key, hundreds of models). Grab a key at [openrouter.ai/keys](https://openrouter.ai/keys), then:
 
 ```powershell
-# PowerShell (recommended)
-.\start.ps1
-# or
-cd precedent; .\start.ps1
+cd precedent
+copy .env.example .env   # then paste your key into OPENAI_API_KEY
 ```
 
-```bat
-REM cmd.exe
-start.bat
+Your `.env` looks like this:
+
+```
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_API_KEY=sk-or-v1-...
+OPENAI_MODEL=gpt-4o-mini   # cheap and good at structured output
 ```
 
-Then open **http://127.0.0.1:8000/**.
+No key? It still runs — in offline **demo mode** with a built-in heuristic reviewer.
 
-On Git Bash / Linux / macOS:
+**2. Start it:**
 
-```bash
-cd precedent && chmod +x start && ./start
+```powershell
+.\start.ps1        # PowerShell, from the repo root or precedent/
 ```
 
-## Configuration
-
-Copy `precedent/.env.example` to `precedent/.env`:
-
-| Var | Meaning |
-|---|---|
-| `OPENAI_BASE_URL` / `OPENAI_API_KEY` | Any OpenAI-compatible endpoint. `LITMUS_AI_*` also accepted. |
-| `OPENAI_MODEL` | Optional model pin. Otherwise auto-discovered. |
-| `DEMO_MODE=true` | Force offline heuristic (no LLM calls). Auto-enabled when no keys are set. |
-| `PORT` | Default `8000`. |
-
-No keys? The app still works in **demo mode**: it reuses the committed `playbook.json` and runs a deterministic heuristic reviewer so every clause still gets a valid cited disposition.
+**3. Open http://127.0.0.1:8000/** — click a sample draft (Windrow, Marchetti), hit **Review contract**, and expand the **Playbook** panel to see what the firm believes.
 
 ## API
 
-- `GET /` → web UI (`index.html`); falls back to JSON health if `web/` missing.
-- `GET /api/health` → `{status, mode, model, playbook_fingerprint, playbook_topics, corpus_documents}`.
-- `GET /api/playbook` → full playbook JSON.
-- `GET /api/samples` → inbound sample names; `GET /api/sample/<name>` → draft text.
-- `POST /api/review` → `{summary, overall_counts, clauses[], playbook_fingerprint}`.
+| Endpoint | What |
+|---|---|
+| `GET /api/health` | status, mode (`live`/`demo`), model, playbook stats |
+| `GET /api/playbook` | the full derived playbook as JSON |
+| `GET /api/samples` | sample draft names |
+| `POST /api/review` | `{"contract": "..."}` → per-clause verdicts |
+
+```powershell
+$body = @{ contract = (Get-Content -Raw .\precedent\inbound\Windrow_MSA_draft.txt) } | ConvertTo-Json
+Invoke-RestMethod http://127.0.0.1:8000/api/review -Method Post -ContentType "application/json" -Body $body
+```
 
 ## Layout
 
 ```
 precedent/
-  corpus/     firm files (source of truth)
-  inbound/    sample counterparty drafts
-  playbook/   generated artifact (committed so demo works)
-  web/        localhost UI (index.html, app.js, styles.css)
-  server.py   HTTP service + static UI
-  reviewer.py clause split + review + guardrails + heuristic fallback
-  playbook.py playbook build/reuse/persist
-  corpus.py   txt/csv/pdf/xlsx ingestion
-  llm.py      OpenAI-compatible client
-  config.py   env + paths + demo mode
+  corpus/     the firm's past work (source of truth)
+  inbound/    sample drafts to test against
+  playbook/   generated artifact (committed, so demo mode works)
+  web/        the UI — plain HTML/JS, no build step
+  server.py   one process serves UI + API
 ```
 
 ## Tests
 
 ```powershell
 cd precedent
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+python -m unittest discover -s tests -v
+python ..\scripts\verify.py   # full end-to-end check
 ```
 
-## Notes
-
-- Corpus documents are adapted from Common Paper / Bonterms (CC BY 4.0) with modifications.
-- Every disposition cites real corpus filenames; unknown clauses escalate; same draft → same result (disk cache in `review_cache/`).
+*Corpus documents adapted from Common Paper / Bonterms (CC BY 4.0), modified.*
