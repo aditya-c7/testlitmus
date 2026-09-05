@@ -105,7 +105,7 @@ function renderReview(review) {
   els.summary.hidden = false;
   els.summaryText.textContent = review.summary || "";
   els.counts.innerHTML = ["accept", "counter", "escalate"]
-    .map((k) => `<span class="pill ${k}">${k}: ${counts[k] ?? 0}</span>`).join("");
+    .map((k) => `<b>${counts[k] ?? 0}</b> ${k}`).join(" · ");
   els.results.innerHTML = clauses.map((c) => {
     const d = esc(c.disposition);
     const cites = (c.citations || []).map((x) => `<code>${esc(x)}</code>`).join("");
@@ -113,7 +113,7 @@ function renderReview(review) {
       ? `<div class="lang"><b>Proposed language:</b>\n${esc(c.proposed_language)}</div>` : "";
     const note = c.approval_note ? `<div class="note"><b>Approval:</b> ${esc(c.approval_note)}</div>` : "";
     return `<article class="card clause ${d}">
-      <h3><span>${esc(c.clause)}</span><span class="badge ${d}">${d}</span></h3>
+      <h3><span>${esc(c.clause)}</span><span class="disp ${d}">${d}</span></h3>
       <div>${esc(c.rationale)}</div>
       ${lang}${note}
       <div class="cites">${cites}</div>
