@@ -23,9 +23,8 @@
     <div class="card">
       <div class="row between">
         <h2>Contract draft</h2>
-        <div class="row gap">
-          <select id="sampleSelect"><option value="">Load sample…</option></select>
-          <button id="loadSample" class="btn ghost" type="button">Load</button>
+        <div class="row gap" id="sampleBtns">
+          <span class="muted small">Samples:</span>
         </div>
       </div>
       <textarea id="contract" spellcheck="false" placeholder="Paste the full counterparty draft here…&#10;&#10;Example:&#10;1. FEES AND PAYMENT&#10;Client will pay within 60 days…&#10;&#10;2. GOVERNING LAW&#10;This Agreement is governed by…"></textarea>
@@ -50,7 +49,19 @@
   </section>
 
   <section class="right">
+    <div class="card">
+      <details>
+        <summary class="section-toggle"><h2>Playbook</h2><span id="playbookMeta" class="muted small">loading…</span></summary>
+        <div id="playbook"></div>
+      </details>
+    </div>
     <div id="summary" class="card" hidden>
+      <div class="row between">
+        <h2>Review</h2>
+        <div id="counts" class="counts"></div>
+      </div>
+      <p id="summaryText" class="muted"></p>
+    </div>
       <div class="row between">
         <h2>Review</h2>
         <div id="counts" class="counts"></div>
@@ -59,7 +70,7 @@
     </div>
     <div id="results"></div>
     <div id="empty" class="card muted center">
-      No review yet. Paste a draft on the left and click <b>Review contract</b>.
+      Review appears here clause-by-clause. Pick a sample above (already loaded) and click <b>Review contract</b>.
     </div>
   </section>
 </main>

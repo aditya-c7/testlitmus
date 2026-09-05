@@ -4,10 +4,11 @@ const els = {
   health: $("health"), healthText: $("healthText"),
   contract: $("contract"), charCount: $("charCount"),
   reviewBtn: $("reviewBtn"), clearBtn: $("clearBtn"),
-  sampleSelect: $("sampleSelect"), loadSample: $("loadSample"),
+  sampleBtns: $("sampleBtns"),
   error: $("error"), summary: $("summary"),
   summaryText: $("summaryText"), counts: $("counts"),
   results: $("results"), empty: $("empty"),
+  playbook: $("playbook"), playbookMeta: $("playbookMeta"),
 };
 
 async function api(path, opts) {
@@ -38,15 +39,58 @@ async function refreshHealth() {
   }
 }
 
+async function loadSample(name) {
+  setError("");
+  try {
+    const data = await api(`/api/sample/${encodeURIComponent(name)}`);
+    els.contract.value = data.contract || "";
+    els.charCount.textContent = `${els.contract.value.length} chars`;
+  } catch (e) { setError(`Could not load sample: ${e.message}`); }
+}
+
 async function refreshSamples() {
   try {
     const data = await api("/api/samples");
-    for (const name of data.samples || []) {
-      const opt = document.createElement("option");
-      opt.value = name; opt.textContent = name;
-      els.sampleSelect.appendChild(opt);
+    const names = data.samples || [];
+    for (const name of names) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn ghost small-btn";
+      btn.textContent = name.replace("_MSA_draft.txt", "");
+      btn.addEventListener("click", () => loadSample(name));
+      els.sampleBtns.appendChild(btn);
     }
+    // Leave the textarea empty; one click on a sample loads it.
   } catch { /* ignore */ }
+}
+
+async function refreshPlaybook() {
+  try {
+    const pb = await api("/api/playbook");
+    const topics = pb.topics || [];
+    els.playbookMeta.textContent = `${pb.firm || "Firm"} · ${topics.length} topics`;
+    els.playbook.innerHTML = topics.map((t) => {
+      const fb = (t.fallbacks || []).map((f) =>
+        `<li><b>Fallback:</b> ${esc(f.position)} <span class="muted">(${esc(f.conditions || "no conditions")}; approved by ${esc(f.approved_by || "unrecorded")})</span></li>`
+      ).join("");
+      const never = (t.never_accept || []).map((n) =>
+        `<li><b>Never accept:</b> ${esc(n.position)}</li>`
+      ).join("");
+      const escWho = t.escalation && (t.escalation.who || t.escalation.when)
+        ? `<div class="note"><b>Escalation:</b> ${esc(t.escalation.who || "")} - ${esc(t.escalation.when || "")}</div>` : "";
+      return `<details class="topic">
+        <summary>${esc(t.topic)}</summary>
+        <div class="topic-body">
+          <div><b>Standard:</b> ${esc(t.standard_position)}</div>
+          ${t.standard_language ? `<div class="lang">${esc(t.standard_language)}</div>` : ""}
+          ${fb || never ? `<ul>${fb}${never}</ul>` : ""}
+          ${escWho}
+        </div>
+      </details>`;
+    }).join("");
+  } catch (e) {
+    els.playbookMeta.textContent = "could not load playbook";
+  }
 }
 
 function setError(msg) {
@@ -87,17 +131,6 @@ els.clearBtn.addEventListener("click", () => {
   setError("");
 });
 
-els.loadSample.addEventListener("click", async () => {
-  const name = els.sampleSelect.value;
-  if (!name) { setError("Pick a sample draft first."); return; }
-  setError("");
-  try {
-    const data = await api(`/api/sample/${encodeURIComponent(name)}`);
-    els.contract.value = data.contract || "";
-    els.charCount.textContent = `${els.contract.value.length} chars`;
-  } catch (e) { setError(`Could not load sample: ${e.message}`); }
-});
-
 els.reviewBtn.addEventListener("click", async () => {
   const contract = els.contract.value.trim();
   if (!contract) { setError("Paste a contract draft first."); return; }
@@ -121,4 +154,5 @@ els.reviewBtn.addEventListener("click", async () => {
 
 refreshHealth();
 refreshSamples();
+refreshPlaybook();
 setInterval(refreshHealth, 15000);
