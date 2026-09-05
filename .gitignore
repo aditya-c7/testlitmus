@@ -1,21 +1,21 @@
 # Sensitive files
 .env
-.env.*
 **/.env
+!.env.example
+**/.env.example
 
 # Python caches / virtual envs
 __pycache__/
 *.pyc
 .venv/
 venv/
-
-# Litmus AI tooling state (not part of source)
-.litmus/
-.claude/
-.github/hooks/
+precedent/.venv/
 
 # Review cache generated at runtime
 review_cache/
+precedent/review_cache/
+_final_*.json
+precedent/_final_*.json
 
 # OS / editor junk
 .DS_Store

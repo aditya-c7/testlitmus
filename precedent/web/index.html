@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Precedent — Contract Review</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">P</span>
+    <div>
+      <h1>Precedent</h1>
+      <p class="sub">Firm playbook &middot; clause-by-clause review</p>
+    </div>
+  </div>
+  <div id="health" class="health"><span class="dot"></span><span id="healthText">connecting…</span></div>
+</header>
+
+<main class="layout">
+  <section class="left">
+    <div class="card">
+      <div class="row between">
+        <h2>Contract draft</h2>
+        <div class="row gap">
+          <select id="sampleSelect"><option value="">Load sample…</option></select>
+          <button id="loadSample" class="btn ghost" type="button">Load</button>
+        </div>
+      </div>
+      <textarea id="contract" spellcheck="false" placeholder="Paste the full counterparty draft here…&#10;&#10;Example:&#10;1. FEES AND PAYMENT&#10;Client will pay within 60 days…&#10;&#10;2. GOVERNING LAW&#10;This Agreement is governed by…"></textarea>
+      <div class="row between">
+        <span id="charCount" class="muted">0 chars</span>
+        <div class="row gap">
+          <button id="clearBtn" class="btn ghost" type="button">Clear</button>
+          <button id="reviewBtn" class="btn primary" type="button">Review contract</button>
+        </div>
+      </div>
+      <p id="error" class="error" hidden></p>
+    </div>
+
+    <div class="card">
+      <h2>How it works</h2>
+      <ol class="muted small">
+        <li>On boot the server builds the playbook from <code>corpus/</code> into <code>playbook/</code>.</li>
+        <li>Paste a draft and hit <b>Review</b> — every clause gets exactly one of <code>accept</code> / <code>counter</code> / <code>escalate</code>.</li>
+        <li>With no API key the app runs in <b>demo mode</b> (deterministic heuristic). Add <code>OPENAI_BASE_URL</code> + <code>OPENAI_API_KEY</code> to <code>.env</code> for live LLM reviews.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="right">
+    <div id="summary" class="card" hidden>
+      <div class="row between">
+        <h2>Review</h2>
+        <div id="counts" class="counts"></div>
+      </div>
+      <p id="summaryText" class="muted"></p>
+    </div>
+    <div id="results"></div>
+    <div id="empty" class="card muted center">
+      No review yet. Paste a draft on the left and click <b>Review contract</b>.
+    </div>
+  </section>
+</main>
+
+<footer class="foot muted small">
+  Served from the same Python process (<code>GET /</code> = UI, <code>POST /api/review</code> = API).
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

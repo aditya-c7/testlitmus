@@ -58,9 +58,16 @@ echo "Validating a clean copy of what gets uploaded, staged at: $WORK"
 [ -x ./start ] || chmod +x ./start 2>/dev/null
 
 # Load .env if present, then warn (not fail) if AI credentials are missing.
+# Demo mode needs no keys; live LLM mode uses OPENAI_* (LITMUS_* accepted).
 [ -f ./.env ] && set -a && . ./.env && set +a
-[ -n "${LITMUS_AI_BASE_URL:-}" ] && [ -n "${LITMUS_AI_API_KEY:-}" ] || \
-  echo "WARN: LITMUS_AI_BASE_URL / LITMUS_AI_API_KEY not set - copy them from your assessment page (see README)"
+if [ -n "${OPENAI_BASE_URL:-}" ] && [ -n "${OPENAI_API_KEY:-}" ]; then
+  echo "AI credentials present (live mode)"
+elif [ -n "${LITMUS_AI_BASE_URL:-}" ] && [ -n "${LITMUS_AI_API_KEY:-}" ]; then
+  echo "AI credentials present via LITMUS_* (live mode)"
+else
+  echo "WARN: no AI credentials set - running in DEMO_MODE (offline heuristic, still valid)"
+  export DEMO_MODE=true
+fi
 
 rm -rf ./playbook
 echo "Starting: PORT=$PORT ./start   (boot limit ${BOOT_LIMIT}s, includes Stage 1 playbook generation)"

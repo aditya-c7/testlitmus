@@ -1,8 +1,8 @@
-.litmus/
-.claude/
-.github/hooks/
 .venv/
 __pycache__/
+*.pyc
 review_cache/
 .env
+!.env.example
+_final_*.json
 

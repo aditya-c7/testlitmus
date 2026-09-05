@@ -33,18 +33,31 @@ class LLMError(RuntimeError):
 
 
 class LLMClient:
-    def __init__(self, base_url: str, api_key: str, timeout: float = 150.0):
+    def __init__(self, base_url: str, api_key: str, timeout: float = 150.0, model: str = ""):
         self.base_url = base_url.rstrip("/")
+        # Normalize: accept bases with or without a trailing /v1.
+        if self.base_url.endswith("/v1"):
+            self._api_base = self.base_url
+        else:
+            self._api_base = self.base_url
         self.api_key = api_key
         self.timeout = timeout
         self.models = self._discover_models()
+        if model:
+            # Explicit override wins (env OPENAI_MODEL).
+            self.models = [model] + [m for m in self.models if m != model]
         self.model = self.models[0]
 
     def _headers(self) -> dict:
         return {"Authorization": f"Bearer {self.api_key}"}
 
+    def _candidate_bases(self) -> list[str]:
+        if self.base_url.endswith("/v1"):
+            return [self.base_url, self.base_url[: -len("/v1")]]
+        return [self.base_url, f"{self.base_url}/v1"]
+
     def _discover_models(self) -> list[str]:
-        for base in (self.base_url, f"{self.base_url}/v1"):
+        for base in self._candidate_bases():
             try:
                 response = httpx.get(f"{base}/models", headers=self._headers(), timeout=15.0)
                 if response.status_code == 200:
@@ -74,25 +87,44 @@ class LLMClient:
         }
         last_error: Exception | None = None
         for attempt in range(6):
-            try:
-                response = httpx.post(
-                    f"{self.base_url}/chat/completions",
-                    headers=self._headers(),
-                    json=payload,
-                    timeout=self.timeout,
-                )
-                if response.status_code == RATE_LIMIT_STATUS:
-                    raise LLMError(f"rate limited (429) on model {payload['model']}")
-                if response.status_code != 200:
-                    raise LLMError(
-                        f"chat/completions returned {response.status_code}: {response.text[:300]}"
+            # Try both URL shapes: some providers mount chat under /v1, some at root.
+            errors: list[str] = []
+            for base in self._candidate_bases():
+                try:
+                    response = httpx.post(
+                        f"{base}/chat/completions",
+                        headers=self._headers(),
+                        json=payload,
+                        timeout=self.timeout,
                     )
-                return response.json()["choices"][0]["message"]["content"]
-            except (httpx.HTTPError, LLMError, KeyError, ValueError) as exc:
-                last_error = exc
-                self._rotate_model()
-                payload["model"] = self.model
-                time.sleep(min(2 ** attempt, 15))
+                    if response.status_code == RATE_LIMIT_STATUS:
+                        raise LLMError(f"rate limited (429) on model {payload['model']}")
+                    if response.status_code == 404:
+                        errors.append(f"404 at {base}/chat/completions")
+                        continue
+                    if response.status_code != 200:
+                        raise LLMError(
+                            f"chat/completions returned {response.status_code}: {response.text[:300]}"
+                        )
+                    data = response.json()
+                    content = data["choices"][0]["message"]["content"]
+                    if not isinstance(content, str) or not content.strip():
+                        raise LLMError("empty content in chat/completions response")
+                    return content
+                except LLMError as exc:
+                    last_error = exc
+                    errors.append(str(exc)[:200])
+                    break  # don't retry other base for semantic errors; rotate model instead
+                except (httpx.HTTPError, KeyError, ValueError) as exc:
+                    last_error = exc
+                    errors.append(str(exc)[:200])
+                    continue
+            else:
+                # All bases 404'd / failed with transport errors; rotate and retry.
+                pass
+            self._rotate_model()
+            payload["model"] = self.model
+            time.sleep(min(2 ** attempt, 15))
         raise LLMError(f"LLM call failed after retries: {last_error}")
 
     def complete_json(self, system: str, user: str, max_tokens: int = 8000):
@@ -112,8 +144,50 @@ def _rank_models(ids: list[str]) -> list[str]:
 
 
 def _extract_json(text: str):
-    cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip(), flags=re.MULTILINE)
+    """Extract the first balanced JSON object/array from model output.
+
+    Handles markdown fences, leading prose, and trailing prose.
+    """
+    cleaned = text.strip()
+    # Strip one layer of markdown fences.
+    fence = re.match(r"^```(?:json)?\s*\n?(.*)\n?\s*```\s*$", cleaned, flags=re.DOTALL)
+    if fence:
+        cleaned = fence.group(1).strip()
+    else:
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
     start = min((i for i in (cleaned.find("{"), cleaned.find("[")) if i >= 0), default=-1)
     if start < 0:
         raise LLMError(f"no JSON object found in model output: {text[:300]}")
-    return json.loads(cleaned[start:])
+    opener = cleaned[start]
+    closer = "}" if opener == "{" else "]"
+    depth = 0
+    in_string = False
+    escaped = False
+    for index in range(start, len(cleaned)):
+        char = cleaned[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == opener:
+            depth += 1
+        elif char == closer:
+            depth -= 1
+            if depth == 0:
+                candidate = cleaned[start : index + 1]
+                try:
+                    return json.loads(candidate)
+                except ValueError as exc:
+                    raise LLMError(f"invalid JSON in model output: {exc}") from exc
+    # Fallback: try parsing from start to end (trailing prose will fail loudly).
+    try:
+        return json.loads(cleaned[start:])
+    except ValueError as exc:
+        raise LLMError(f"invalid JSON in model output: {exc}") from exc

@@ -67,14 +67,54 @@ def load_or_build(documents: list[Document], llm) -> tuple[dict, str]:
     existing = _read_existing(fingerprint)
     if existing is not None:
         return existing, fingerprint
-    playbook = build(documents, llm)
+    if llm is None:
+        stale = _read_stale()
+        if stale is not None:
+            return stale, stale.get("fingerprint", fingerprint)
+        raise RuntimeError(
+            "no playbook for current corpus and no LLM available; "
+            "run with AI credentials once or keep the committed playbook.json"
+        )
+    try:
+        playbook = build(documents, llm)
+    except Exception:
+        stale = _read_stale()
+        if stale is not None:
+            return stale, stale.get("fingerprint", fingerprint)
+        raise
     persist(playbook, fingerprint)
     return playbook, fingerprint
 
 
+def _truncate_for_prompt(documents: list[Document], budget: int = 60000) -> list[Document]:
+    """Cap total prompt chars so a large corpus can't blow the context window.
+
+    Priority: template > memos > policies > deals > redlines, then alphabetical.
+    """
+    def priority(doc: Document) -> tuple[int, str]:
+        order = {"template": 0, "memos": 1, "policies": 2, "deals": 3, "redlines": 4}
+        return (order.get(doc.category, 9), doc.citation)
+
+    ordered = sorted(documents, key=priority)
+    kept: list[Document] = []
+    used = 0
+    per_file_cap = 8000
+    for doc in ordered:
+        text = doc.text[:per_file_cap]
+        if used + len(text) > budget and kept:
+            remaining = budget - used
+            if remaining > 1000:
+                kept.append(Document(citation=doc.citation, category=doc.category, text=text[:remaining]))
+            break
+        kept.append(Document(citation=doc.citation, category=doc.category, text=text))
+        used += len(text)
+    return kept
+
+
 def build(documents: list[Document], llm) -> dict:
+    scoped = _truncate_for_prompt(documents)
     rendered = "\n\n".join(
-        f"===== FILE: {doc.citation} ({doc.category}) =====\n{doc.text}" for doc in documents
+        f"===== FILE: {doc.citation} ({doc.category}) =====\n{doc.text}" for doc in scoped
     )
     user = PLAYBOOK_USER_TEMPLATE.format(documents=rendered)
     playbook = llm.complete_json(PLAYBOOK_SYSTEM, user, max_tokens=12000)
@@ -117,6 +157,22 @@ def _read_existing(fingerprint: str) -> dict | None:
         return None
 
 
+def _read_stale() -> dict | None:
+    """Return the committed playbook even if the fingerprint differs.
+
+    Used as a last resort so the service (and localhost demo) can boot
+    without credentials or when the LLM call fails.
+    """
+    path = PLAYBOOK_DIR / "playbook.json"
+    if not path.exists():
+        return None
+    try:
+        stored = json.loads(path.read_text(encoding="utf-8"))
+        return stored if isinstance(stored, dict) and stored.get("topics") else None
+    except (OSError, ValueError):
+        return None
+
+
 def _keep_known(citations, known: set[str]) -> list[str]:
     if not isinstance(citations, list):
         return []
@@ -142,7 +198,6 @@ def _render_markdown_lines(playbook: dict) -> list[str]:
 
 def _render_topic(lines: list[str], topic: dict) -> None:
     wash = _wash_topic(topic)
-    topic.update(wash)
     lines.append(f"## {wash.get('topic', 'Unnamed topic')}")
     lines.append("")
     lines.append(f"**Standard position:** {wash.get('standard_position', '')}")
