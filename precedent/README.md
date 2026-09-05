@@ -1,4 +1,4 @@
-# Precedent — contract playbook service
+# Precedent - contract playbook service
 
 See the repo root `../README.md` for full docs.
 

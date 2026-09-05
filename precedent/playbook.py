@@ -12,6 +12,7 @@ When documents disagree, prefer the most recent evidence and actual deal conduct
 A fallback is real only if an executed agreement used it or the approvals log shows it was approved; record the approver names exactly as the files give them.
 Never-accept positions come from memos, rejected approvals, or a consistent pattern of refusal.
 Every "evidence" entry must be the exact file name as given in the FILE headers, spelled character for character.
+Write plainly, like a lawyer's working notes: short sentences, no em dashes, no filler.
 Respond with a single JSON object and nothing else."""
 
 PLAYBOOK_USER_TEMPLATE = """Below are all working files of one firm's contract practice, one per FILE header.
@@ -186,7 +187,7 @@ def render_markdown(playbook: dict) -> str:
 
 def _render_markdown_lines(playbook: dict) -> list[str]:
     lines = [
-        f"# Negotiation Playbook — {playbook.get('firm', 'Firm')}",
+        f"# Negotiation Playbook - {playbook.get('firm', 'Firm')}",
         "",
         f"Derived from the corpus at `{playbook.get('derived_at', '')}` (fingerprint `{playbook.get('fingerprint', '')}`).",
         "",
@@ -213,8 +214,8 @@ def _render_topic(lines: list[str], topic: dict) -> None:
             approver = fallback.get("approved_by") or "unrecorded"
             conditions = fallback.get("conditions") or "none stated"
             lines.append(
-                f"- {fallback.get('position', '')} — conditions: {conditions}; approved by: {approver} "
-                f"(evidence: {', '.join(fallback.get('evidence', []))})"
+                f"- {fallback.get('position', '')} (conditions: {conditions}; approved by: {approver}; "
+                f"evidence: {', '.join(fallback.get('evidence', []))})"
             )
     never = wash.get("never_accept") or []
     if never:
@@ -225,7 +226,7 @@ def _render_topic(lines: list[str], topic: dict) -> None:
     escalation = wash.get("escalation") or {}
     if escalation:
         lines.append("")
-        lines.append(f"**Escalation:** {escalation.get('who', '')} — {escalation.get('when', '')}")
+        lines.append(f"**Escalation:** {escalation.get('who', '')} / {escalation.get('when', '')}")
     conflicts = wash.get("conflicts") or []
     if conflicts:
         lines.append("")

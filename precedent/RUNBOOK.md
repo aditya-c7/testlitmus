@@ -1,4 +1,4 @@
-# Precedent — how to run (localhost)
+# Precedent - how to run (localhost)
 
 ## 1. Configure (optional)
 

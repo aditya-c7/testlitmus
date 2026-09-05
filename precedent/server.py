@@ -1,4 +1,4 @@
-"""Precedent — legal playbook + contract review service with localhost web UI."""
+"""Precedent - legal playbook + contract review service with localhost web UI."""
 import json
 import mimetypes
 import sys

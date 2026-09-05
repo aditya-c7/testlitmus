@@ -14,7 +14,7 @@ ORIG="$PWD"
 cleanup() {
   [ -n "$SRV_PID" ] && { kill "$SRV_PID" 2>/dev/null; wait "$SRV_PID" 2>/dev/null; }
   # Stage 1 writes ./playbook inside the staging copy, which is about to be
-  # deleted — hand it back so you can read what your agent actually produced.
+  # deleted - hand it back so you can read what your agent actually produced.
   # It is part of the deliverable, not just a validation side effect.
   if [ -n "$WORK" ] && [ -d "$WORK/playbook" ]; then
     rm -rf "$ORIG/playbook" && cp -R "$WORK/playbook" "$ORIG/playbook" 2>/dev/null \
@@ -30,15 +30,15 @@ fail() { printf "FAIL: %b\n" "$1"; exit 1; }
 
 # Validate a COPY with installed-dependency directories removed, because that is
 # what grading actually runs. `litmus submit` never uploads node_modules, venv,
-# .venv, env, build, dist, target, .gradle, .idea or __pycache__ — they are large
-# and machine-specific — and the grading sandbox installs nothing for you. So a
+# .venv, env, build, dist, target, .gradle, .idea or __pycache__ - they are large
+# and machine-specific - and the grading sandbox installs nothing for you. So a
 # ./start that assumes its dependencies are already on disk passes here in your
 # working directory and then fails at grading with a module-not-found error.
 # Checking the copy is the only way this script can tell you that in advance.
 #
 # Your ./start is what installs them: the README asks for a start script "that
 # can handle whatever your system needs to build and run". `npm ci`, `pip install
-# -r requirements.txt`, `go mod download` — whatever your stack needs, before it
+# -r requirements.txt`, `go mod download` - whatever your stack needs, before it
 # serves.
 STRIP_DIRS="node_modules __pycache__ venv .venv env target build dist .gradle .idea"
 WORK="$(mktemp -d)"
@@ -49,7 +49,7 @@ tar -cf - $TAR_EXCLUDES . 2>/dev/null | (cd "$WORK" && tar -xf -) \
   || fail "could not stage a clean copy for validation"
 for d in $STRIP_DIRS; do
   if [ -e "./$d" ]; then
-    echo "NOTE: ./$d exists here but is NOT uploaded — validating without it."
+    echo "NOTE: ./$d exists here but is NOT uploaded - validating without it."
   fi
 done
 cd "$WORK" || fail "could not enter the staging copy"
