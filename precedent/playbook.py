@@ -87,29 +87,58 @@ def load_or_build(documents: list[Document], llm) -> tuple[dict, str]:
     return playbook, fingerprint
 
 
-def _truncate_for_prompt(documents: list[Document], budget: int = 60000) -> list[Document]:
-    """Cap total prompt chars so a large corpus can't blow the context window.
+def _truncate_for_prompt(documents: list[Document], budget: int = 100000) -> list[Document]:
+    """Pack every document into a fixed char budget without dropping files.
 
-    Priority: template > memos > policies > deals > redlines, then alphabetical.
+    Two passes: first every file gets up to a floor of full text, then the
+    leftover budget goes to files by category weight (template and memos
+    first). Anything trimmed is logged to stderr.
     """
+    import sys
+
+    WEIGHTS = {"template": 4, "memos": 3, "policies": 2, "deals": 2, "redlines": 2}
+
     def priority(doc: Document) -> tuple[int, str]:
         order = {"template": 0, "memos": 1, "policies": 2, "deals": 3, "redlines": 4}
         return (order.get(doc.category, 9), doc.citation)
 
     ordered = sorted(documents, key=priority)
-    kept: list[Document] = []
-    used = 0
-    per_file_cap = 8000
-    for doc in ordered:
-        text = doc.text[:per_file_cap]
-        if used + len(text) > budget and kept:
-            remaining = budget - used
-            if remaining > 1000:
-                kept.append(Document(citation=doc.citation, category=doc.category, text=text[:remaining]))
+    per_file_cap = 12000
+    floor = 2000
+    takes = [min(len(doc.text), floor) for doc in ordered]
+    remaining = budget - sum(takes)
+    weights = [WEIGHTS.get(doc.category, 1) for doc in ordered]
+    for position, doc in enumerate(ordered):
+        weight_left = sum(weights[position:])
+        if remaining <= 0 or weight_left <= 0:
             break
-        kept.append(Document(citation=doc.citation, category=doc.category, text=text))
-        used += len(text)
-    return kept
+        room = per_file_cap - takes[position]
+        if room <= 0 or len(doc.text) <= takes[position]:
+            continue
+        extra = min(room, len(doc.text) - takes[position], remaining * weights[position] // weight_left)
+        takes[position] += extra
+        remaining -= extra
+    packed: list[Document] = []
+    trimmed: list[tuple[str, int, int]] = []
+    for doc, take in zip(ordered, takes):
+        if len(doc.text) <= take:
+            packed.append(doc)
+        elif take >= 500:
+            packed.append(Document(citation=doc.citation, category=doc.category, text=doc.text[:take]))
+            trimmed.append((doc.citation, len(doc.text), take))
+        else:
+            stub = doc.text[:500]
+            packed.append(Document(citation=doc.citation, category=doc.category, text=stub))
+            trimmed.append((doc.citation, len(doc.text), len(stub)))
+    if trimmed:
+        print(
+            f"[precedent] playbook prompt packed {len(packed)}/{len(ordered)} files "
+            f"into {budget} chars; trimmed {len(trimmed)}: "
+            + ", ".join(f"{c} {o}->{k}" for c, o, k in trimmed[:8]),
+            file=sys.stderr,
+            flush=True,
+        )
+    return packed
 
 
 def build(documents: list[Document], llm) -> dict:

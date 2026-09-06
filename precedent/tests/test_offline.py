@@ -10,6 +10,7 @@ import playbook as playbook_module
 import reviewer as reviewer_module
 from config import ROOT
 from corpus import load_corpus
+from match import BM25, rank_evidence, rank_topics
 from reviewer import Reviewer, segment_clauses
 from server import ThreadingHTTPServer, make_handler
 
@@ -56,9 +57,87 @@ class SegmentationTests(unittest.TestCase):
         self.assertEqual(len(clauses), 1)
         self.assertEqual(clauses[0]["clause"], "Contract")
 
+    def test_article_and_section_headings(self):
+        draft = (
+            "Preamble text here.\n"
+            "\n"
+            "Article 3 Fees and Payment\n"
+            "Pay within 30 days.\n"
+            "\n"
+            "Section 8 Limitation of Liability\n"
+            "Cap at six months fees.\n"
+        )
+        clauses = segment_clauses(draft)
+        identifiers = [clause["clause"] for clause in clauses]
+        self.assertIn("Preamble", identifiers)
+        self.assertTrue(any(i.startswith("Article 3") for i in identifiers))
+        self.assertTrue(any(i.startswith("Section 8") for i in identifiers))
+
+
+
+class MatchTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.documents = load_corpus(ROOT / "corpus")
+        cls.playbook = {
+            "topics": [
+                {
+                    "topic": "Fees and Payment",
+                    "standard_position": "net 30",
+                    "standard_language": "pay within thirty days",
+                    "fallbacks": [],
+                    "never_accept": [],
+                    "escalation": {},
+                    "conflicts": [],
+                    "notes": "",
+                },
+                {
+                    "topic": "Governing Law",
+                    "standard_position": "Delaware law",
+                    "standard_language": "governed by Delaware law",
+                    "fallbacks": [],
+                    "never_accept": [],
+                    "escalation": {},
+                    "conflicts": [],
+                    "notes": "",
+                },
+            ]
+        }
+
+    def test_bm25_scores_relevant_doc_highest(self):
+        index = BM25(["fees payment invoice net thirty", "governing law delaware courts"])
+        scores = index.scores("payment terms net thirty days")
+        self.assertGreater(scores[0], scores[1])
+
+    def test_rank_topics_finds_fees(self):
+        ranked = rank_topics(self.playbook, "3. FEES AND PAYMENT", "Client pays within 45 days of invoice", 2)
+        self.assertTrue(ranked)
+        self.assertEqual(ranked[0][0]["topic"], "Fees and Payment")
+
+    def test_rank_evidence_returns_excerpts(self):
+        hits = rank_evidence(
+            self.documents,
+            "fees payment within thirty days invoice",
+            preferred=["template/Novaric_MSA_standard_form.txt"],
+            top_n=2,
+        )
+        self.assertTrue(hits)
+        for hit in hits:
+            self.assertIn("citation", hit)
+            self.assertTrue(hit["excerpt"].strip())
+        self.assertEqual(hits[0]["citation"], "template/Novaric_MSA_standard_form.txt")
+
 
 
 class ReviewerTests(unittest.TestCase):
+    TINY = (
+        "1. FEES AND PAYMENT\n"
+        "Client pays within 30 days of invoice.\n"
+        "\n"
+        "2. GOVERNING LAW\n"
+        "Delaware law applies.\n"
+    )
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -66,94 +145,96 @@ class ReviewerTests(unittest.TestCase):
         self.documents = load_corpus(ROOT / "corpus")
         self.draft = (ROOT / "inbound" / "Marchetti_MSA_draft.txt").read_text(encoding="utf-8")
 
-    def _reviewer(self, responses):
-        return Reviewer(FakeLLM(responses), self.documents, {"topics": []}, "testfp")
+    def _reviewer(self, responses, **kwargs):
+        return Reviewer(FakeLLM(responses), self.documents, {"topics": []}, "testfp",
+                        model="fake", max_workers=1, **kwargs)
+
+    def _ok_entry(self, **overrides):
+        entry = {
+            "disposition": "accept",
+            "rationale": "matches standard",
+            "citations": ["template/Novaric_MSA_standard_form.txt"],
+            "proposed_language": None,
+            "approval_note": None,
+            "confidence": 90,
+        }
+        entry.update(overrides)
+        return entry
+
+    def test_parallel_reviews_cover_every_clause(self):
+        reviewer = self._reviewer([
+            self._ok_entry(),
+            self._ok_entry(disposition="counter", proposed_language="Pay within 30 days.", confidence=70),
+            "Short summary.",
+        ])
+        review = reviewer.review(self.TINY)
+        self.assertEqual(
+            [e["clause"] for e in review["clauses"]],
+            ["1. FEES AND PAYMENT", "2. GOVERNING LAW"],
+        )
+        self.assertEqual(sum(review["overall_counts"].values()), 2)
+        for entry in review["clauses"]:
+            self.assertIn(entry["disposition"], ("accept", "counter", "escalate"))
+            self.assertIn(entry["risk"], ("low", "medium", "high"))
+            self.assertTrue(0 <= entry["confidence"] <= 100)
+            self.assertTrue(entry["citations"])
+            self.assertTrue(entry["evidence"])
+            self.assertIn("citation", entry["evidence"][0])
+            self.assertIn("excerpt", entry["evidence"][0])
+        self.assertIn("risk_counts", review)
+        self.assertEqual(review["model"], "fake")
+        self.assertGreaterEqual(review["usage"]["calls"], 3)
 
     def test_invalid_entries_are_repaired(self):
-        first_pass = {
-            "summary": "mixed",
-            "clauses": [
-                {
-                    "clause": "3. FEES AND PAYMENT",
-                    "disposition": "accept",
-                    "rationale": "matches standard net-30 terms",
-                    "citations": ["template/Novaric_MSA_standard_form.txt", "made_up_file.txt"],
-                    "proposed_language": None,
-                    "approval_note": None,
-                },
-                {
-                    "clause": "4. PRICING COMMITMENTS",
-                    "disposition": "maybe",
-                    "rationale": "unclear",
-                    "citations": [],
-                    "proposed_language": None,
-                    "approval_note": None,
-                },
-            ],
-        }
-        repair_pass = {
-            "summary": "fixed",
-            "clauses": [
-                {
-                    "clause": "4. PRICING COMMITMENTS",
-                    "disposition": "escalate",
-                    "rationale": "most-favored-nation pricing is never accepted",
-                    "citations": ["memos/memo_2025_Veylan_declined.txt"],
-                    "proposed_language": None,
-                    "approval_note": "decline engagement (partner)",
-                }
-            ],
-        }
-        reviewer = self._reviewer([first_pass, repair_pass])
-        review = reviewer.review(self.draft)
+        reviewer = self._reviewer([
+            self._ok_entry(),
+            {"disposition": "maybe", "rationale": "unclear", "citations": []},
+            {"clauses": [self._ok_entry(
+                disposition="escalate",
+                rationale="most-favored-nation pricing is never accepted",
+                citations=["memos/memo_2025_Veylan_declined.txt"],
+                approval_note="decline engagement (partner)",
+                confidence=88,
+            ) | {"clause": "2. GOVERNING LAW"}]},
+            "Fixed summary.",
+        ])
+        review = reviewer.review(self.TINY)
         by_clause = {entry["clause"]: entry for entry in review["clauses"]}
-        self.assertEqual(by_clause["4. PRICING COMMITMENTS"]["disposition"], "escalate")
+        self.assertEqual(by_clause["2. GOVERNING LAW"]["disposition"], "escalate")
         self.assertEqual(
-            by_clause["4. PRICING COMMITMENTS"]["citations"], ["memos/memo_2025_Veylan_declined.txt"]
+            by_clause["2. GOVERNING LAW"]["citations"], ["memos/memo_2025_Veylan_declined.txt"]
         )
-        self.assertEqual(by_clause["3. FEES AND PAYMENT"]["citations"], ["template/Novaric_MSA_standard_form.txt"])
+        self.assertEqual(by_clause["1. FEES AND PAYMENT"]["citations"], ["template/Novaric_MSA_standard_form.txt"])
 
     def test_every_clause_gets_a_disposition(self):
-        partial = {
-            "summary": "partial",
-            "clauses": [
-                {
-                    "clause": "3. FEES AND PAYMENT",
-                    "disposition": "accept",
-                    "rationale": "standard",
-                    "citations": [],
-                    "proposed_language": None,
-                    "approval_note": None,
-                }
-            ],
-        }
-        review = self._reviewer([partial]).review(self.draft)
+        review = self._reviewer([self._ok_entry()]).review(self.draft)
         clauses = segment_clauses(self.draft)
         self.assertEqual(len(review["clauses"]), len(clauses))
         self.assertEqual(sum(review["overall_counts"].values()), len(review["clauses"]))
         self.assertTrue(
             all(entry["disposition"] in ("accept", "counter", "escalate") for entry in review["clauses"])
         )
+        self.assertTrue(all(entry["citations"] for entry in review["clauses"]))
+
+    def test_low_confidence_bumps_risk(self):
+        reviewer = self._reviewer([
+            self._ok_entry(confidence=20),
+            self._ok_entry(confidence=95),
+            "Summary.",
+        ])
+        review = reviewer.review(self.TINY)
+        by_clause = {entry["clause"]: entry for entry in review["clauses"]}
+        # accept is low risk, but confidence 20 bumps it to medium.
+        self.assertEqual(by_clause["1. FEES AND PAYMENT"]["risk"], "medium")
+        self.assertEqual(by_clause["2. GOVERNING LAW"]["risk"], "low")
 
     def test_review_is_cached_by_contract(self):
-        payload = {
-            "summary": "s",
-            "clauses": [
-                {
-                    "clause": "3. FEES AND PAYMENT",
-                    "disposition": "accept",
-                    "rationale": "standard",
-                    "citations": ["template/Novaric_MSA_standard_form.txt"],
-                    "proposed_language": None,
-                    "approval_note": None,
-                }
-            ],
-        }
-        reviewer = self._reviewer([payload])
-        first = reviewer.review(self.draft)
-        second = reviewer.review(self.draft)
+        contract = "No headings here at all."
+        reviewer = self._reviewer([self._ok_entry(), "s"])
+        first = reviewer.review(contract)
+        second = reviewer.review(contract)
         self.assertEqual(first, second)
-        self.assertEqual(reviewer.llm.calls, 1)
+        self.assertEqual(reviewer.llm.calls, 2)
 
 
 class PlaybookTests(unittest.TestCase):

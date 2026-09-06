@@ -76,6 +76,18 @@ class LLMClient:
         return False
 
     def complete(self, system: str, user: str, max_tokens: int = 8000) -> str:
+        text, _ = self.complete_with_usage(system, user, max_tokens=max_tokens)
+        return text
+
+    def complete_with_usage(
+        self, system: str, user: str, max_tokens: int = 8000
+    ) -> tuple[str, dict]:
+        """Like complete(), but also returns the provider's usage dict.
+
+        Usage shape follows the OpenAI convention:
+        {"prompt_tokens": int, "completion_tokens": int, "total_tokens": int}.
+        Missing counts default to 0.
+        """
         payload = {
             "model": self.model,
             "messages": [
@@ -110,7 +122,7 @@ class LLMClient:
                     content = data["choices"][0]["message"]["content"]
                     if not isinstance(content, str) or not content.strip():
                         raise LLMError("empty content in chat/completions response")
-                    return content
+                    return content, _usage_of(data)
                 except LLMError as exc:
                     last_error = exc
                     errors.append(str(exc)[:200])
@@ -130,6 +142,31 @@ class LLMClient:
     def complete_json(self, system: str, user: str, max_tokens: int = 8000):
         text = self.complete(system, user, max_tokens=max_tokens)
         return _extract_json(text)
+
+    def complete_json_with_usage(self, system: str, user: str, max_tokens: int = 8000):
+        text, usage = self.complete_with_usage(system, user, max_tokens=max_tokens)
+        return _extract_json(text), usage
+
+
+def _usage_of(data: dict) -> dict:
+    """Pull token counts out of a chat/completions response body."""
+    raw = data.get("usage") or {} if isinstance(data, dict) else {}
+    if not isinstance(raw, dict):
+        raw = {}
+    try:
+        prompt = int(raw.get("prompt_tokens") or 0)
+    except (TypeError, ValueError):
+        prompt = 0
+    try:
+        completion = int(raw.get("completion_tokens") or 0)
+    except (TypeError, ValueError):
+        completion = 0
+    total = raw.get("total_tokens")
+    try:
+        total = int(total) if total is not None else prompt + completion
+    except (TypeError, ValueError):
+        total = prompt + completion
+    return {"prompt_tokens": prompt, "completion_tokens": completion, "total_tokens": total}
 
 
 def _rank_models(ids: list[str]) -> list[str]:
