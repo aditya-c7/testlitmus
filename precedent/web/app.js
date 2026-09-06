@@ -1,7 +1,8 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
 const els = {
-  health: $("health"), healthText: $("healthText"), themeBtn: $("themeBtn"),
+  health: $("health"), healthText: $("healthText"), themeBtn: $("themeBtn"), aboutBtn: $("aboutBtn"),
+  intro: $("intro"), introTry: $("introTry"), introClose: $("introClose"),
   contract: $("contract"), charCount: $("charCount"),
   reviewBtn: $("reviewBtn"), clearBtn: $("clearBtn"), fileInput: $("fileInput"),
   sampleBtns: $("sampleBtns"),
@@ -366,3 +367,23 @@ refreshHealth();
 refreshSamples();
 refreshPlaybook();
 setInterval(refreshHealth, 15000);
+
+/* ---------- first-visit intro + showcase ---------- */
+const QUICKSTART = "Sample_MSA_quickstart.txt";
+function showIntro() { els.intro.hidden = false; }
+function hideIntro(seen) {
+  els.intro.hidden = true;
+  if (seen) { try { localStorage.setItem("precedent-seen", "1"); } catch { /* ignore */ } }
+}
+els.introClose.addEventListener("click", () => hideIntro(true));
+els.aboutBtn.addEventListener("click", showIntro);
+els.introTry.addEventListener("click", async () => {
+  hideIntro(true);
+  await loadSample(QUICKSTART);
+  if (!els.contract.value.trim()) return;
+  await runReview(els.contract.value.trim());
+  els.summaryBar.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+try {
+  if (!localStorage.getItem("precedent-seen")) showIntro();
+} catch { /* ignore */ }

@@ -1,0 +1,20 @@
+Master Services Agreement - Quickstart Sample (fictional counterparty draft)
+============================================================================
+
+This short draft shows what Precedent does. It mixes easy, debatable, and
+off-limits clauses on purpose.
+
+1. FEES AND PAYMENT
+Client will pay all undisputed fees within sixty (60) days of the date of each invoice.
+
+2. TERM AND RENEWAL
+This Agreement begins on the Effective Date and continues for twelve (12) months, renewing automatically for successive twelve-month terms unless either party gives thirty (30) days' written notice.
+
+3. LIMITATION OF LIABILITY
+Neither party's total liability will exceed the amounts paid by Client in the six (6) months before the claim. Neither party is liable for indirect or consequential damages.
+
+4. PRICING COMMITMENTS
+Supplier promises Client will always pay the lowest price Supplier offers to any customer for similar services, applied retroactively.
+
+5. GOVERNING LAW
+This Agreement is governed by the laws of the State of Delaware.

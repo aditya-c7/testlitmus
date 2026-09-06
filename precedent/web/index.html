@@ -7,12 +7,28 @@
 <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+<div id="intro" class="intro" hidden>
+  <div class="intro-card">
+    <div class="wordmark">Precedent</div>
+    <p class="intro-lead">Every firm has negotiation habits buried in old paperwork. This tool digs them out and uses them to grade new contracts.</p>
+    <ol class="intro-steps">
+      <li><b>It learned your playbook</b> from past deals: standard terms, approved fallback language, and lines you never cross.</li>
+      <li><b>You give it a draft.</b> Each clause gets one verdict: accept, counter (with your wording), or escalate to a lawyer.</li>
+      <li><b>Every call shows its work:</b> citations and quoted evidence from your real files.</li>
+    </ol>
+    <div class="row gap">
+      <button id="introTry" class="btn primary" type="button">Try a sample review</button>
+      <button id="introClose" class="btn ghost" type="button">Just look around</button>
+    </div>
+  </div>
+</div>
 <header class="topbar">
   <div class="brand">
     <span class="wordmark">Precedent</span>
     <p class="tagline">Contract playbook &amp; clause review</p>
   </div>
   <div class="row gap">
+    <button id="aboutBtn" class="btn ghost small-btn" type="button" title="What is this?">About</button>
     <div id="health" class="health"><span class="dot"></span><span id="healthText">connecting…</span></div>
     <button id="themeBtn" class="btn ghost small-btn" type="button" title="Toggle theme">Light</button>
   </div>
