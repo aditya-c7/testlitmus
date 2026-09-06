@@ -1,4 +1,5 @@
 import csv
+import io
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -38,13 +39,49 @@ def _read_document(path: Path) -> str:
         return "\n".join(" | ".join(row) for row in rows)
     if suffix == ".pdf":
         return _read_pdf(path)
+    if suffix == ".docx":
+        return _read_docx_bytes(path.read_bytes(), str(path))
     if suffix in {".xlsx", ".xls"}:
         return _read_spreadsheet(path)
     return ""
 
 
+def extract_upload(filename: str, data: bytes) -> str:
+    """Extract draft text from raw uploaded bytes (pdf, docx, or plain text)."""
+    name = filename or ""
+    suffix = Path(name).suffix.lower()
+    head = bytes(data[:4])
+    if suffix == ".pdf" or head.startswith(b"%PDF"):
+        return _read_pdf_bytes(data)
+    if suffix == ".docx" or head.startswith(b"PK"):
+        return _read_docx_bytes(data, name)
+    try:
+        return bytes(data).decode("utf-8", errors="replace")
+    except Exception:
+        return ""
+
+
+def _read_docx_bytes(data: bytes, name: str = "") -> str:
+    try:
+        import docx
+    except ImportError as exc:
+        raise RuntimeError(
+            "python-docx is not installed; run pip install -r requirements.txt"
+        ) from exc
+    document = docx.Document(io.BytesIO(bytes(data)))
+    parts = [p.text for p in document.paragraphs]
+    for table in document.tables:
+        for row in table.rows:
+            parts.append(" | ".join(cell.text for cell in row.cells))
+    return "\n".join(p for p in (parts or []) if p and p.strip())
+
+
 def _read_pdf(path: Path) -> str:
     return "\n".join((page.extract_text() or "") for page in PdfReader(str(path)).pages)
+
+
+def _read_pdf_bytes(data: bytes) -> str:
+    return "\n".join((page.extract_text() or "") for page in PdfReader(io.BytesIO(bytes(data))).pages)
 
 
 def _read_spreadsheet(path: Path) -> str:

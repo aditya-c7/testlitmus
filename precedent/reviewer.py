@@ -203,31 +203,64 @@ class Reviewer:
     # -- main pipeline ------------------------------------------------------
 
     def review(self, contract_text: str) -> dict:
+        result = None
+        for kind, payload in self.review_iter(contract_text):
+            if kind == "done":
+                result = payload
+        assert result is not None
+        return result
+
+    def review_iter(self, contract_text: str):
+        """Yield ("clause", {"index", "entry", "total"}) live, then ("done", review).
+
+        Lets the UI paint clause cards as they finish instead of waiting for
+        the whole review. Fully deterministic given the same LLM outputs.
+        """
         cached = self._read_cache(contract_text)
         if cached is not None:
-            return cached
+            clauses = cached.get("clauses", [])
+            for i, entry in enumerate(clauses):
+                yield ("clause", {"index": i, "entry": entry, "total": len(clauses)})
+            yield ("done", cached)
+            return
         clauses = segment_clauses(contract_text)
         self._reset_usage()
         matched = [match.rank_topics(self.playbook, c["clause"], c.get("text", ""), TOPICS_PER_CLAUSE) for c in clauses]
 
         entries: list[dict | None] = [None] * len(clauses)
         raws: list = [None] * len(clauses)
+        finalized: set[int] = set()
+
+        def emit(i: int) -> None:
+            if entries[i] is not None and i not in finalized:
+                entries[i] = self._finalize([entries[i]], clauses)[0]
+                finalized.add(i)
+
         if len(clauses) == 1 or self.max_workers == 1:
-            for i, clause in enumerate(clauses):
-                entries[i], raws[i] = self._review_single(clause, [t for t, _ in matched[i]])
+            order = range(len(clauses))
+            for i in order:
+                entries[i], raws[i] = self._review_single(clauses[i], [t for t, _ in matched[i]])
+                if entries[i] is not None:
+                    emit(i)
+                    yield ("clause", {"index": i, "entry": entries[i], "total": len(clauses)})
         else:
+            from concurrent.futures import as_completed
+
             with ThreadPoolExecutor(max_workers=min(self.max_workers, len(clauses))) as pool:
-                futures = [
-                    pool.submit(self._review_single, clause, [t for t, _ in matched[i]])
-                    for i, clause in enumerate(clauses)
-                ]
-                for i, future in enumerate(futures):
+                future_to_index = {
+                    pool.submit(self._review_single, clauses[i], [t for t, _ in matched[i]]): i
+                    for i in range(len(clauses))
+                }
+                for future in as_completed(future_to_index):
+                    i = future_to_index[future]
                     try:
                         entries[i], raws[i] = future.result()
                     except Exception:
                         entries[i], raws[i] = None, None
+                    if entries[i] is not None:
+                        emit(i)
+                        yield ("clause", {"index": i, "entry": entries[i], "total": len(clauses)})
 
-        valid = [e for e in entries if e is not None]
         failed_idx = [i for i, e in enumerate(entries) if e is None]
         if failed_idx:
             repaired = self._repair_batch(
@@ -235,20 +268,36 @@ class Reviewer:
             )
             for i, entry in zip(failed_idx, repaired):
                 entries[i] = entry
+                emit(i)
+                yield ("clause", {"index": i, "entry": entry, "total": len(clauses)})
         # Any clause still without an entry gets the deterministic heuristic.
         for i, clause in enumerate(clauses):
             if entries[i] is None:
                 entries[i] = self._heuristic_entry(clause, [t for t, _ in matched[i]])
+                emit(i)
+                yield ("clause", {"index": i, "entry": entries[i], "total": len(clauses)})
 
         ordered = self._cover_gaps([e for e in entries if e is not None], clauses)
-        ordered = self._force_never_accept(ordered, clauses)
-        ordered = self._ensure_citations(ordered, clauses)
-        ordered = self._attach_evidence(ordered, clauses)
-        ordered = self._attach_risk(ordered)
+        # Gap-filled entries are new; finalize just those.
+        for entry in ordered:
+            try:
+                idx = next(i for i, c in enumerate(clauses) if c["clause"] == entry["clause"])
+            except StopIteration:
+                idx = -1
+            if idx not in finalized:
+                self._finalize([entry], clauses)
+                finalized.add(idx)
         summary = self._summarize(ordered)
         review = self._compose(summary, ordered)
         self._write_cache(contract_text, review)
-        return review
+        yield ("done", review)
+
+    def _finalize(self, entries: list[dict], clauses: list[dict]) -> list[dict]:
+        entries = self._force_never_accept(entries, clauses)
+        entries = self._ensure_citations(entries, clauses)
+        entries = self._attach_evidence(entries, clauses)
+        entries = self._attach_risk(entries)
+        return entries
 
     def _review_single(self, clause: dict, topics: list[dict]):
         """One LLM call for one clause. Returns (entry|None, raw|None)."""

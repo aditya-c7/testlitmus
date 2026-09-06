@@ -27,6 +27,40 @@ MODEL_PREFERENCES = (
 
 RATE_LIMIT_STATUS = 429
 
+# USD per 1M tokens (input, output). Used for the cost meter; unknown models -> None.
+PRICING_PER_MTOK = {
+    "gpt-4o-mini": (0.15, 0.60),
+    "gpt-4o": (2.50, 10.00),
+    "gpt-4.1-mini": (0.40, 1.60),
+    "gpt-4.1": (2.00, 8.00),
+    "gpt-3.5-turbo": (0.50, 1.50),
+    "anthropic/claude-sonnet-4.5": (3.00, 15.00),
+    "anthropic/claude-haiku-4.5": (1.00, 5.00),
+    "google/gemini-2.5-pro": (1.25, 10.00),
+    "google/gemini-2.0-flash-001": (0.10, 0.40),
+    "deepseek/deepseek-chat": (0.27, 1.10),
+}
+
+
+def estimate_cost_usd(model: str, usage: dict) -> float | None:
+    """Rough spend for one review from token usage. None when model unknown."""
+    name = (model or "").lower()
+    rates = PRICING_PER_MTOK.get(name)
+    if rates is None:
+        for key, candidate in PRICING_PER_MTOK.items():
+            if name.endswith(key) or key in name:
+                rates = candidate
+                break
+    if rates is None or not isinstance(usage, dict):
+        return None
+    try:
+        prompt = int(usage.get("prompt_tokens") or 0)
+        completion = int(usage.get("completion_tokens") or 0)
+    except (TypeError, ValueError):
+        return None
+    per_in, per_out = rates
+    return round(prompt / 1_000_000 * per_in + completion / 1_000_000 * per_out, 4)
+
 
 class LLMError(RuntimeError):
     pass

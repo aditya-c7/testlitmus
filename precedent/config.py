@@ -69,3 +69,30 @@ def demo_mode() -> bool:
 
 def model_override() -> str:
     return _get_env("OPENAI_MODEL", "AI_MODEL")
+
+
+def save_env(updates: dict[str, str]) -> None:
+    """Write keys into the .env file next to server.py (localhost setup wizard).
+
+    Existing keys are preserved; only the given keys are added or replaced.
+    Also updates os.environ so the running process picks them up.
+    """
+    path = ROOT / ".env"
+    lines: list[str] = []
+    seen: set[str] = set()
+    if path.exists():
+        for raw in path.read_text(encoding="utf-8").splitlines():
+            stripped = raw.strip()
+            if stripped and not stripped.startswith("#") and "=" in stripped:
+                key = stripped.split("=", 1)[0].strip()
+                if key in updates:
+                    lines.append(f"{key}={updates[key]}")
+                    seen.add(key)
+                    continue
+            lines.append(raw)
+    for key, value in updates.items():
+        if key not in seen:
+            lines.append(f"{key}={value}")
+    path.write_text("\n".join(lines).rstrip("\n") + "\n", encoding="utf-8")
+    for key, value in updates.items():
+        os.environ[key] = value

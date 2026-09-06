@@ -322,6 +322,77 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(httpx.get(f"http://127.0.0.1:{self.port}/nope").status_code, 404)
 
 
+class ServiceEndpointTests(unittest.TestCase):
+    """Exercise the real service in demo mode (no network, heuristic review)."""
+
+    @classmethod
+    def setUpClass(cls):
+        import os
+
+        import config
+
+        os.environ["DEMO_MODE"] = "true"
+        # PlaybookTests rebinds this global; point it back at the real dir.
+        playbook_module.PLAYBOOK_DIR = config.PLAYBOOK_DIR
+        cls.tmp = tempfile.TemporaryDirectory()
+        reviewer_module.REVIEW_CACHE_DIR = Path(cls.tmp.name)
+        import server as server_module
+
+        cls.service = server_module.PrecedentService()
+        assert cls.service.demo, "expected demo mode for endpoint tests"
+        cls.server = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(cls.service))
+        cls.port = cls.server.server_address[1]
+        threading.Thread(target=cls.server.serve_forever, daemon=True).start()
+
+    @classmethod
+    def tearDownClass(cls):
+        import os
+
+        cls.server.shutdown()
+        cls.tmp.cleanup()
+        os.environ.pop("DEMO_MODE", None)
+
+    def test_metrics_endpoint(self):
+        httpx.post(f"http://127.0.0.1:{self.port}/api/review", json={"contract": "Pay $5 on delivery."}, timeout=30)
+        data = httpx.get(f"http://127.0.0.1:{self.port}/api/metrics", timeout=10).json()
+        self.assertGreaterEqual(data["reviews"], 1)
+        self.assertIn("cache_hit_rate", data)
+        self.assertIn("avg_latency_s", data)
+
+    def test_stream_endpoint_emits_done(self):
+        with httpx.stream("POST", f"http://127.0.0.1:{self.port}/api/review/stream",
+                           json={"contract": "Simple one-clause draft about fees."}, timeout=60) as response:
+            self.assertEqual(response.status_code, 200)
+            body = response.read().decode("utf-8")
+        self.assertIn("event: clause", body)
+        self.assertIn("event: done", body)
+        done_payload = body.split("event: done")[-1]
+        data_line = next(line for line in done_payload.splitlines() if line.startswith("data: "))
+        final = json.loads(data_line[len("data: "):])
+        self.assertIn("overall_counts", final)
+        self.assertIn("risk_counts", final)
+
+    def test_upload_endpoint(self):
+        response = httpx.post(
+            f"http://127.0.0.1:{self.port}/api/review/file",
+            content=b"1. Fees and Payment. Pay within 30 days.",
+            headers={"Content-Type": "text/plain", "X-Filename": "draft.txt"},
+            timeout=60,
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["filename"], "draft.txt")
+        self.assertTrue(payload["review"]["clauses"])
+
+    def test_setup_rejects_unreachable_api(self):
+        response = httpx.post(
+            f"http://127.0.0.1:{self.port}/api/setup",
+            json={"base_url": "http://127.0.0.1:1", "api_key": "bad"},
+            timeout=60,
+        )
+        self.assertEqual(response.status_code, 502)
+
+
 if __name__ == "__main__":
     unittest.main()
 
