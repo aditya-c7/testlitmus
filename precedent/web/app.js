@@ -198,7 +198,7 @@ function renderAll() {
   els.results.innerHTML = order.map((i) => cardHTML(state.clauses[i], i)).join("");
   els.nav.innerHTML = state.clauses.map((c, i) => {
     const d = esc(c.disposition || "escalate");
-    return `<button type="button" data-i="${i}" class="d-${d}" style="${clauseVisible(c) ? "" : "display:none"}">${esc(c.clause)}</button>`;
+    return `<button type="button" data-i="${i}" class="d-${d}" style="${clauseVisible(c) ? "" : "display:none"}"><span class="ndot"></span>${esc(c.clause)}</button>`;
   }).join("");
   els.nav.querySelectorAll("button").forEach((b) =>
     b.addEventListener("click", () => {
