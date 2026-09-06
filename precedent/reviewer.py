@@ -187,6 +187,20 @@ def _call_llm_json(llm, system: str, user: str, max_tokens: int):
     return llm.complete_json(system, user, max_tokens=max_tokens), zero
 
 
+def _call_llm_text(llm, system: str, user: str, max_tokens: int):
+    """Call the LLM for plain prose, with or without usage tracking."""
+    zero = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+    fn = getattr(llm, "complete_with_usage", None)
+    if callable(fn):
+        return fn(system, user, max_tokens=max_tokens)
+    out = llm.complete_json(system, user, max_tokens=max_tokens)
+    if isinstance(out, str):
+        return out, zero
+    if isinstance(out, dict):
+        return str(out.get("summary", "") or ""), zero
+    return "", zero
+
+
 class Reviewer:
     def __init__(self, llm, documents: list[Document], playbook: dict, fingerprint: str,
                  model: str = "unknown", max_workers: int = MAX_WORKERS):
@@ -586,7 +600,7 @@ class Reviewer:
             counts=", ".join(f"{v} {k}" for k, v in counts.items()), lines=lines
         )
         try:
-            text, usage = _call_llm_json(self.llm, REVIEW_SUMMARY_SYSTEM, user, max_tokens=600)
+            text, usage = _call_llm_text(self.llm, REVIEW_SUMMARY_SYSTEM, user, max_tokens=600)
             self._add_usage(usage)
             if isinstance(text, dict):
                 text = text.get("summary", "") or ""
