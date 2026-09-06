@@ -2,23 +2,23 @@
    One light source (top-left): raised surfaces carry a top-edge highlight
    plus a soft drop shadow. Bronze appears at key moments only. */
 :root, [data-theme="dark"] {
-  --bg: #12100c;
-  --card: #1a1712;
-  --card2: #221e17;
-  --ink: #ece5d6;
-  --muted: #a2987f;
-  --line: #2e2820;
-  --accent: #c9973f;
-  --accent-ink: #171208;
+  --bg: #0d1117;
+  --card: #141a23;
+  --card2: #1a2230;
+  --ink: #e6e9ee;
+  --muted: #8b94a3;
+  --line: #26303f;
+  --accent: #6ea8d8;
+  --accent-ink: #0a121c;
   --accept: #6fa287;
   --accept-bg: rgba(111, 162, 135, 0.13);
   --counter: #d0a24a;
   --counter-bg: rgba(208, 162, 74, 0.13);
   --escalate: #cf6b5e;
   --escalate-bg: rgba(207, 107, 94, 0.13);
-  --code-bg: #14110d;
-  --edge-hi: inset 0 1px 0 rgba(236, 229, 214, 0.07);
-  --edge-lo: 0 10px 24px rgba(0, 0, 0, 0.42);
+  --code-bg: #0a0d13;
+  --edge-hi: inset 0 1px 0 rgba(230, 233, 238, 0.07);
+  --edge-lo: 0 10px 24px rgba(0, 0, 0, 0.45);
   --btn-press: inset 0 2px 5px rgba(0, 0, 0, 0.45);
 }
 [data-theme="light"] {
@@ -150,8 +150,8 @@ input[type="text"], input:not([type]), input[type="password"], input[type="searc
 .btn:hover { border-color: var(--accent); }
 .btn:active { transform: translateY(1px); box-shadow: var(--btn-press); }
 .btn.primary {
-  background: linear-gradient(180deg, #d8ab55, #b8892f);
-  border-color: #8a6420; color: #171208;
+  background: linear-gradient(180deg, #8ab8e2, #5d97c8);
+  border-color: #3f6f9c; color: #0a121c;
 }
 [data-theme="light"] .btn.primary {
   background: linear-gradient(180deg, #9a742a, #8a6420);
@@ -278,7 +278,7 @@ ol.small li { margin-bottom: 4px; }
 /* Intro overlay */
 .intro {
   position: fixed; inset: 0; z-index: 50;
-  background: rgba(8, 6, 3, 0.7);
+  background: rgba(5, 8, 13, 0.72);
   backdrop-filter: blur(3px);
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
