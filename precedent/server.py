@@ -406,7 +406,8 @@ def make_handler(service: PrecedentService):
             except Exception as exc:
                 self._respond(500, {"error": "review failed", "detail": str(exc)})
                 return
-            self._respond(200, {"filename": Path(filename).name, "chars": len(text), "review": review})
+            self._respond(200, {"filename": Path(filename).name, "chars": len(text),
+                               "preview": text[:4000], "review": review})
 
         def _setup(self, body: dict) -> None:
             # Localhost setup wizard: test credentials, optionally save + apply.

@@ -55,6 +55,14 @@ def review_text(name):
     resp = httpx.post(f"{base}/api/review", json={"contract": contract}, timeout=120)
     assert resp.status_code == 200, resp.text[:300]
     review = resp.json()
+    assert_review(review, service)
+    # determinism
+    resp2 = httpx.post(f"{base}/api/review", json={"contract": contract}, timeout=120)
+    assert resp2.json() == review, "non-deterministic"
+    return f"{len(review['clauses'])} clauses ok"
+
+
+def assert_review(review, service):
     clauses = review.get("clauses", [])
     assert clauses, "no clauses"
     known = {d.citation for d in service.documents}
@@ -62,18 +70,55 @@ def review_text(name):
     bad_disp = [c for c in clauses if c.get("disposition") not in ("accept", "counter", "escalate")]
     bad_cite = [c for c in clauses for c in c.get("citations", []) if c not in known]
     no_lang = [c["clause"] for c in clauses if c.get("disposition") == "counter" and not (c.get("proposed_language") or "").strip()]
+    bad_risk = [c["clause"] for c in clauses if c.get("risk") not in ("low", "medium", "high")]
+    bad_conf = [c["clause"] for c in clauses if not isinstance(c.get("confidence"), int)]
+    no_ev = [c["clause"] for c in clauses if not c.get("evidence")]
     assert not bad_disp, f"bad dispositions {bad_disp}"
     assert not empty, f"empty citations {empty}"
     assert not bad_cite, f"bad citations {bad_cite}"
     assert not no_lang, f"counter w/o language {no_lang}"
-    # determinism
-    resp2 = httpx.post(f"{base}/api/review", json={"contract": contract}, timeout=120)
-    assert resp2.json() == review, "non-deterministic"
-    return f"{len(clauses)} clauses ok"
+    assert not bad_risk, f"bad risk {bad_risk}"
+    assert not bad_conf, f"bad confidence {bad_conf}"
+    assert not no_ev, f"missing evidence {no_ev}"
+    assert "risk_counts" in review and "usage" in review, "missing v2 fields"
 
 
 check("review Windrow", lambda: review_text("Windrow_MSA_draft.txt"))
 check("review Marchetti", lambda: review_text("Marchetti_MSA_draft.txt"))
+
+
+def stream_review():
+    with httpx.stream("POST", f"{base}/api/review/stream",
+                       json={"contract": "Fees are due in 30 days. Delaware law applies."},
+                       timeout=60) as response:
+        assert response.status_code == 200, response.status_code
+        body = response.read().decode("utf-8")
+    assert "event: clause" in body, "no clause events"
+    assert "event: done" in body, "no done event"
+    data_line = next(line for line in body.split("event: done")[-1].splitlines() if line.startswith("data: "))
+    final = json.loads(data_line[len("data: "):])
+    assert_review(final, service)
+    return f"{len(final['clauses'])} streamed clauses ok"
+
+
+check("review stream", stream_review)
+
+
+def check_ui():
+    html = httpx.get(f"{base}/", headers={"Accept": "text/html", "User-Agent": "Mozilla/5.0"}, timeout=10).text
+    assert 'data-theme="dark"' in html, "dark default missing"
+    assert html.count('id="summaryText"') == 1, "duplicate summary block"
+    assert 'id="setupCard"' in html, "setup wizard missing"
+    assert 'id="fileInput"' in html, "upload missing"
+    css = httpx.get(f"{base}/styles.css", timeout=10).text
+    assert '[data-theme="light"]' in css, "light theme missing"
+    js = httpx.get(f"{base}/app.js", timeout=10).text
+    assert "/api/review/stream" in js, "stream not wired"
+    return "dark default, single summary, wizard, upload wired"
+
+
+check("dark ui shell", check_ui)
+check("metrics endpoint", lambda: httpx.get(f"{base}/api/metrics", timeout=10).json()["reviews"])
 
 smoke = 'This MSA is between Example Client and Supplier. 1. Fees and Payment. Client will pay within 45 days. 2. Governing Law. Governed by Delaware law.'
 check("review smoke", lambda: f"{len(httpx.post(f'{base}/api/review', json={'contract': smoke}, timeout=60).json()['clauses'])} clauses")

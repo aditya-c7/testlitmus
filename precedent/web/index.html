@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,11 +12,27 @@
     <span class="wordmark">Precedent</span>
     <p class="tagline">Contract playbook &amp; clause review</p>
   </div>
-  <div id="health" class="health"><span class="dot"></span><span id="healthText">connecting…</span></div>
+  <div class="row gap">
+    <div id="health" class="health"><span class="dot"></span><span id="healthText">connecting…</span></div>
+    <button id="themeBtn" class="btn ghost small-btn" type="button" title="Toggle theme">Light</button>
+  </div>
 </header>
 
 <main class="layout">
   <section class="left">
+    <div id="setupCard" class="card setup" hidden>
+      <h2>Connect a model</h2>
+      <p class="muted small">Running in demo mode. Paste an <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a> key for live AI reviews. Stays on this machine.</p>
+      <label class="field"><span>Base URL</span><input id="setupBase" value="https://openrouter.ai/api/v1" /></label>
+      <label class="field"><span>API key</span><input id="setupKey" type="password" placeholder="sk-or-v1-…" autocomplete="off" /></label>
+      <label class="field"><span>Model (optional)</span><input id="setupModel" list="modelList" placeholder="auto" autocomplete="off" /><datalist id="modelList"></datalist></label>
+      <div class="row gap">
+        <button id="setupTest" class="btn ghost" type="button">Test</button>
+        <button id="setupSave" class="btn primary" type="button">Save &amp; connect</button>
+        <span id="setupMsg" class="muted small"></span>
+      </div>
+    </div>
+
     <div class="card">
       <div class="row between">
         <h2>Contract draft</h2>
@@ -28,6 +44,7 @@
       <div class="row between">
         <span id="charCount" class="muted">0 chars</span>
         <div class="row gap">
+          <label class="btn ghost small-btn file-btn">Upload<input id="fileInput" type="file" accept=".txt,.md,.pdf,.docx" hidden /></label>
           <button id="clearBtn" class="btn ghost" type="button">Clear</button>
           <button id="reviewBtn" class="btn primary" type="button">Review contract</button>
         </div>
@@ -35,14 +52,14 @@
       <p id="error" class="error" hidden></p>
     </div>
 
-    <div class="card">
-      <h2>How it works</h2>
+    <details class="card quiet">
+      <summary class="section-toggle"><h2>How it works</h2></summary>
       <ol class="muted small">
         <li>On boot the server builds the playbook from <code>corpus/</code> into <code>playbook/</code>.</li>
-        <li>Paste a draft and hit <b>Review</b> - every clause gets exactly one of <code>accept</code> / <code>counter</code> / <code>escalate</code>.</li>
-        <li>With no API key the app runs in <b>demo mode</b> (deterministic heuristic). Add <code>OPENAI_BASE_URL</code> + <code>OPENAI_API_KEY</code> to <code>.env</code> for live LLM reviews.</li>
+        <li>Paste a draft (or upload PDF/DOCX) and hit <b>Review</b> - every clause gets exactly one of <code>accept</code> / <code>counter</code> / <code>escalate</code>, with confidence, risk, and cited evidence.</li>
+        <li>With no API key the app runs in <b>demo mode</b> (deterministic heuristic). Connect a key above for live reviews.</li>
       </ol>
-    </div>
+    </details>
   </section>
 
   <section class="right">
@@ -52,28 +69,39 @@
         <div id="playbook"></div>
       </details>
     </div>
-    <div id="summary" class="card" hidden>
-      <div class="row between">
-        <h2>Review</h2>
+    <div id="summaryBar" class="card summarybar" hidden>
+      <div class="row between wrap">
         <div id="counts" class="counts"></div>
+        <div id="riskLine" class="muted small"></div>
       </div>
       <p id="summaryText" class="muted"></p>
-    </div>
-      <div class="row between">
-        <h2>Review</h2>
-        <div id="counts" class="counts"></div>
+      <div class="row between wrap">
+        <span id="progress" class="muted small"></span>
+        <span id="costLine" class="muted small"></span>
       </div>
-      <p id="summaryText" class="muted"></p>
     </div>
-    <div id="results"></div>
-    <div id="empty" class="card muted center">
-      Review appears here clause-by-clause. Pick a sample above (already loaded) and click <b>Review contract</b>.
+    <div id="filterRow" class="row gap wrap filters" hidden>
+      <button class="chip on" data-f="all" type="button">All</button>
+      <button class="chip" data-f="accept" type="button">Accept</button>
+      <button class="chip" data-f="counter" type="button">Counter</button>
+      <button class="chip" data-f="escalate" type="button">Escalate</button>
+      <button class="chip" data-f="high" type="button">High risk</button>
+      <input id="search" placeholder="Filter clauses…" />
+    </div>
+    <div class="review-grid">
+      <aside id="nav" class="nav" hidden></aside>
+      <div id="resultsCol">
+        <div id="results"></div>
+        <div id="empty" class="card muted center">
+          Clause-by-clause results land here. Load a sample and hit <b>Review contract</b>.
+        </div>
+      </div>
     </div>
   </section>
 </main>
 
 <footer class="foot muted small">
-  Served from the same Python process (<code>GET /</code> = UI, <code>POST /api/review</code> = API).
+  Same Python process serves UI and API (<code>POST /api/review</code>, <code>/api/review/stream</code>, <code>/api/metrics</code>).
 </footer>
 
 <script src="/app.js"></script>

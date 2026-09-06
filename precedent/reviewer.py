@@ -287,6 +287,9 @@ class Reviewer:
             if idx not in finalized:
                 self._finalize([entry], clauses)
                 finalized.add(idx)
+        texts = {c["clause"]: (c.get("text", "") or "")[:2000] for c in clauses}
+        for entry in ordered:
+            entry.setdefault("text", texts.get(entry.get("clause", ""), ""))
         summary = self._summarize(ordered)
         review = self._compose(summary, ordered)
         self._write_cache(contract_text, review)
